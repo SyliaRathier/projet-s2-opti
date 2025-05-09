@@ -46,7 +46,8 @@
         }
 
         #input-section input[type="text"],
-        #input-section textarea {
+        #input-section textarea,
+        #input-section select {
             width: calc(100% - 20px);
             padding: 0.75rem;
             margin-bottom: 1rem;
@@ -57,7 +58,8 @@
         }
 
         #input-section input[type="text"]:focus,
-        #input-section textarea:focus {
+        #input-section textarea:focus,
+        #input-section select:focus {
             outline: none;
             border-color: #4CAF50;
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
@@ -149,14 +151,20 @@
     <h1>Optimisation Simplexe</h1>
 
     <div id="input-section">
-        <label for="objective">Fonction à maximiser :</label>
-        <input type="text" id="objective" value="4x + 3y + 2z">
+        <label for="optimization-type">Type d'optimisation :</label>
+        <select id="optimization-type">
+            <option value="maximize">Maximiser</option>
+            <option value="minimize">Minimiser</option>
+        </select>
 
-        <label for="constraints">Contraintes (<= seulement) :</label>
-                <textarea id="constraints" rows="5">2x + y + 2z <= 8
-3x + 2y + z <= 8</textarea>
+        <label for="objective">Fonction objectif :</label>
+        <input type="text" id="objective" value="3x + 2y">
 
-                <button onclick="solve()">Résoudre</button>
+        <label for="constraints">Contraintes :</label>
+        <textarea id="constraints" rows="5">x + y >= 4
+2x + y >= 5</textarea>
+
+        <button onclick="solve()">Résoudre</button>
     </div>
 
     <div id="result-container">
@@ -183,21 +191,35 @@
             return Array.from(new Set(all.match(/[a-z]/gi))).sort();
         }
 
-        function buildTableau(objective, constraints, vars) {
+        function buildTableau(objective, constraints, vars, optimizationType) {
             let tableau = [], rhs = [];
             let slackIndex = 0;
             for (let line of constraints) {
-                let [lhs, b] = line.split('<=').map(x => x.trim());
+                let [lhs, b] = line.split(/<=|>=/).map(x => x.trim());
+                let inequality = line.includes('<=') ? '<=' : '>=';
+
                 let row = vars.map(v => parseExpr(lhs)[v] || 0);
                 let slack = Array(constraints.length).fill(0);
                 slack[slackIndex++] = 1;
+
+                if (inequality === '>=') {
+                    row = row.map(x => -x);
+                    slack = slack.map(x => -x);
+                    b = -parseFloat(b);
+                } else {
+                    b = parseFloat(b);
+                }
+
                 row = row.concat(slack);
-                rhs.push(parseFloat(b));
+                rhs.push(b);
                 tableau.push(row);
             }
 
             // Objective row
             let objRow = vars.map(v => -(parseExpr(objective)[v] || 0));
+            if (optimizationType === 'minimize') {
+                objRow = objRow.map(x => -x);
+            }
             objRow = objRow.concat(Array(constraints.length).fill(0));
             tableau.push(objRow);
             rhs.push(0);
@@ -248,11 +270,12 @@
         function solve() {
             let obj = document.getElementById("objective").value;
             let constraints = document.getElementById("constraints").value.trim().split('\n');
+            let optimizationType = document.getElementById("optimization-type").value;
             let result = document.getElementById("result");
 
             try {
                 const vars = extractVars(obj, constraints);
-                let { tableau, rhs } = buildTableau(obj, constraints, vars);
+                let { tableau, rhs } = buildTableau(obj, constraints, vars, optimizationType);
                 let final = simplex(tableau, rhs);
 
                 let output = "La solution optimale est :\n";
@@ -282,6 +305,9 @@
                 }
 
                 let z = final.rhs[final.rhs.length - 1];
+                if (optimizationType === 'minimize') {
+                    z = -z;
+                }
                 output += `Valeur optimale : ${z.toFixed(4)}`;
                 result.textContent = output;
 
@@ -317,10 +343,16 @@
 
                 // Add constraints
                 constraints.forEach((constraint, index) => {
-                    let [lhs, b] = constraint.split('<=').map(x => x.trim());
+                    let [lhs, b] = constraint.split(/<=|>=/).map(x => x.trim());
+                    let inequality = constraint.includes('<=') ? '<=' : '>=';
                     let coeffs = parseExpr(lhs);
                     let xValues = [0, parseFloat(b) / coeffs[vars[0]]];
                     let yValues = [parseFloat(b) / coeffs[vars[1]], 0];
+
+                    if (inequality === '>=') {
+                        xValues = xValues.map(x => -x);
+                        yValues = yValues.map(y => -y);
+                    }
 
                     let constraintTrace = {
                         x: xValues,
@@ -361,10 +393,16 @@
 
                 // Add constraints as surfaces
                 constraints.forEach((constraint, index) => {
-                    let [lhs, b] = constraint.split('<=').map(x => x.trim());
+                    let [lhs, b] = constraint.split(/<=|>=/).map(x => x.trim());
+                    let inequality = constraint.includes('<=') ? '<=' : '>=';
                     let coeffs = parseExpr(lhs);
                     let xRange = [0, parseFloat(b) / coeffs[vars[0]]];
                     let yRange = [0, parseFloat(b) / coeffs[vars[1]]];
+
+                    if (inequality === '>=') {
+                        xRange = xRange.map(x => -x);
+                        yRange = yRange.map(y => -y);
+                    }
 
                     let xValues = [];
                     let yValues = [];
