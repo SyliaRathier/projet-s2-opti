@@ -256,8 +256,8 @@
                     row[slackSurplusIndex + i] = 1;
                     rhs.push(bVal);
                 } else if (constraintTypes[i] === '>=') {
-                    row[slackSurplusIndex + i] = -1; // Variable de surplus
-                    row[artificialIndex + i] = 1; // Variable artificielle
+                    row[slackSurplusIndex + i] = -1; // Variable de surplus (négative)
+                    row[artificialIndex + i] = 1; // Variable artificielle (positive)
                     rhs.push(bVal);
                 }
                 tableau.push(row);
@@ -275,14 +275,15 @@
             // Ajustement pour les variables artificielles
             let artificialVarOffset = numVars + numSlackSurplus;
             for (let i = 0; i < numArtificial; i++) {
-                objRow[artificialVarOffset + i] = M; // +M pour la minimisation
+                objRow[artificialVarOffset + i] = (optimizationType === 'minimize' ? M : -M); // +M pour min, -M pour max
             }
 
             tableau.push(objRow);
             rhs.push(0);
 
-            return { tableau, rhs };
+            return { tableau, rhs, numSlackSurplus, numArtificial }; // Retourner le nombre de variables de surplus et artificielles
         }
+
 
         function pivot(tableau, rhs, pivotRow, pivotCol) {
             let pivotValue = tableau[pivotRow][pivotCol];
@@ -348,16 +349,16 @@
 
             try {
                 const vars = extractVars(obj, constraints);
-                let { tableau, rhs } = buildTableau(obj, constraints, vars, optimizationType);
+                let { tableau, rhs, numSlackSurplus, numArtificial } = buildTableau(obj, constraints, vars, optimizationType);
 
                 // Afficher le tableau initial pour le débogage
                 let outputInitialTable = "<h3>Tableau Initial (Débogage) :</h3><table><tr>";
                 let tableauVars = [...vars];
-                for (let i = 0; i < constraints.length; i++) {
+                for (let i = 0; i < numSlackSurplus; i++) {
                     tableauVars.push(`s${i + 1}`);
-                    if (constraints[i].includes(">=")) {
-                        tableauVars.push(`a${i + 1}`);
-                    }
+                }
+                for (let i = 0; i < numArtificial; i++) {
+                    tableauVars.push(`a${i + 1}`);
                 }
                 tableauVars.push("-p");
                 tableauVars.forEach(v => outputInitialTable += `<th>${v}</th>`);
@@ -370,7 +371,6 @@
                 outputInitialTable += "</table>";
                 resultDiv.innerHTML = outputInitialTable;
 
-                // L'appel à simplex sera après l'affichage du tableau initial
                 let finalResult = simplex(tableau, rhs);
                 let finalTableau = finalResult.tableau;
                 let finalRhs = finalResult.rhs;
@@ -378,6 +378,7 @@
 
                 let output = "La solution optimale est :\n";
                 let values = Array(vars.length).fill(0);
+                let fullVars = [...vars, ...Array(numSlackSurplus).fill(0).map((_, i) => `s${i + 1}`), ...Array(numArtificial).fill(0).map((_, i) => `a${i + 1}`)];
 
                 for (let v = 0; v < vars.length; v++) {
                     let found = false;
@@ -408,16 +409,16 @@
                     z = -z;
                 }
                 output += `Valeur optimale : ${z.toFixed(4)}\n\n`;
-                resultDiv.innerHTML += output; // Ajouter le résultat après le tableau initial
+                resultDiv.innerHTML += output;
 
-                // Afficher les étapes du Simplex
+                // Afficher les étapes du Simplex (avec les noms de variables mis à jour)
                 let tableauDiv = document.createElement('div');
                 tableauDiv.innerHTML += '<h3>Étapes du Simplexe :</h3>';
                 history.forEach((step, index) => {
                     tableauDiv.innerHTML += `<h4>Tableau ${index + 1}:</h4>`;
                     let tbl = document.createElement('table');
                     let headerRow = tbl.insertRow();
-                    tableauVars.forEach(v => {
+                    fullVars.forEach(v => {
                         let th = document.createElement('th');
                         th.textContent = v;
                         headerRow.appendChild(th);
@@ -443,12 +444,11 @@
                     });
                     tableauDiv.appendChild(tbl);
                     if (step.pivotRow !== undefined && index > 0) {
-                        tableauDiv.innerHTML += `<p>Pivot : Ligne ${step.pivotRow + 1}, Colonne ${step.pivotCol + 1} (${tableauVars[step.pivotCol]})</p>`;
+                        tableauDiv.innerHTML += `<p>Pivot : Ligne ${step.pivotRow + 1}, Colonne <span class="math-inline">\{step\.pivotCol \+ 1\} \(</span>{fullVars[step.pivotCol]})</p>`;
                     }
                 });
                 resultDiv.appendChild(tableauDiv);
 
-                // Plot the result with constraints
                 plotResult(vars, values, z, constraints);
 
             } catch (err) {
@@ -456,8 +456,6 @@
                 graphContainer.innerHTML = '';
             }
         }
-
-
 
 
         function plotResult(vars, values, optimalValue, constraints) {
@@ -610,9 +608,6 @@
                 Plotly.newPlot(graphContainer, traces, layout);
             }
         }
-
-
-
     </script>
 </body>
 
