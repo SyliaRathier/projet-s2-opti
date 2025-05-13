@@ -25,6 +25,11 @@
             --pivot-col: #0077b6;
             --pivot-row-font: #102a43;
         }
+        .button-container {
+            display: flex;
+            justify-content: center;
+        }
+
 
         .dark-mode {
             --background-color: #102a43;
@@ -226,7 +231,10 @@
         <textarea id="constraints" rows="5">x + y >= 4
 2x + y >= 5</textarea>
 
-        <button onclick="solve()">Résoudre</button>
+       <div class="button-container">
+    <button onclick="solve()">Résoudre</button>
+</div>
+
     </div>
 
     <div id="result-container">
