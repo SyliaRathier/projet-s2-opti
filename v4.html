@@ -10,16 +10,63 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
+        :root {
+            --background-color: #f0f4f8;
+            --text-color: #333;
+            --input-background: #fff;
+            --input-border: #e0e0e0;
+            --button-background: #3498db;
+            /* Blue */
+            --button-hover: #2980b9;
+            /* Darker Blue */
+            --button-active: #1f618d;
+            /* Even Darker Blue */
+            --result-background: #e6f2ff;
+            /* Light Blue */
+            --result-border: #b3d9ff;
+            /* Slightly Darker Light Blue */
+            --table-header: #f2f2f2;
+            --pivot-row: #e0f7fa;
+            --pivot-col: #007bff;
+            --pivot-row-font: #333;
+            /* Default font color for pivot row */
+        }
+
+        .dark-mode {
+            --background-color: #2c3e50;
+            --text-color: #f0f4f8;
+            --input-background: #34495e;
+            --input-border: #7f8c8d;
+            --button-background: #2980b9;
+            /* Darker Blue */
+            --button-hover: #1f618d;
+            /* Even Darker Blue */
+            --button-active: #1a5276;
+            /* Even Darker Blue */
+            --result-background: #1a2b48;
+            /* Dark Blue */
+            --result-border: #2a4b7c;
+            /* Slightly Lighter Dark Blue */
+            --table-header: #34495e;
+            --pivot-row: #2980b9;
+            /* Darker Blue */
+            --pivot-col: #3498db;
+            /* Blue */
+            --pivot-row-font: #f0f4f8;
+            /* Font color for pivot row in dark mode */
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             padding: 20px;
             margin: auto;
-            background-color: #f0f4f8;
-            color: #333;
+            background-color: var(--background-color);
+            color: var(--text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         table {
@@ -36,38 +83,41 @@
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: var(--table-header);
         }
 
         .pivot-row {
-            background-color: #e0f7fa;
+            background-color: var(--pivot-row);
+            color: var(--pivot-row-font);
+            /* Font color for pivot row */
         }
 
         .pivot-col {
             font-weight: bold;
-            color: #007bff;
+            color: var(--pivot-col);
         }
 
         h1 {
             text-align: center;
-            color: #2c3e50;
+            color: var(--text-color);
             margin-bottom: 2rem;
         }
 
         #input-section {
-            background-color: #fff;
+            background-color: var(--input-background);
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             margin-bottom: 2rem;
             width: 90%;
             max-width: 600px;
+            transition: background-color 0.3s;
         }
 
         #input-section label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #444;
+            color: var(--text-color);
             font-weight: 500;
         }
 
@@ -77,18 +127,20 @@
             width: calc(100% - 20px);
             padding: 0.75rem;
             margin-bottom: 1rem;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--input-border);
             border-radius: 6px;
             transition: border-color 0.3s ease;
             font-size: 1rem;
+            background-color: var(--input-background);
+            color: var(--text-color);
         }
 
         #input-section input[type="text"]:focus,
         #input-section textarea:focus,
         #input-section select:focus {
             outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            border-color: var(--button-background);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
 
         #input-section textarea {
@@ -98,7 +150,7 @@
 
         #input-section button {
             padding: 0.75rem 1.5rem;
-            background-color: #4CAF50;
+            background-color: var(--button-background);
             color: white;
             border: none;
             border-radius: 6px;
@@ -109,35 +161,36 @@
         }
 
         #input-section button:hover {
-            background-color: #45a049;
+            background-color: var(--button-hover);
             transform: translateY(-2px);
         }
 
         #input-section button:active {
-            background-color: #388e3c;
+            background-color: var(--button-active);
             transform: translateY(0);
         }
 
         #result-container {
-            background-color: #e3f4f1;
+            background-color: var(--result-background);
             padding: 1.5rem;
             border-radius: 10px;
             margin-top: 2rem;
             width: 90%;
             max-width: 600px;
-            border: 1px solid #b0f0d4;
+            border: 1px solid var(--result-border);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         #result-container h3 {
-            color: #1a5235;
+            color: var(--text-color);
             margin-bottom: 1rem;
             font-size: 1.25rem;
             font-weight: 600;
         }
 
         #result-container pre {
-            color: #006400;
+            color: var(--text-color);
             font-family: 'Courier New', monospace;
             white-space: pre-wrap;
             line-height: 1.5;
@@ -148,6 +201,23 @@
             width: 100%;
             max-width: 600px;
             margin-top: 2rem;
+        }
+
+        .mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--button-background);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .mode-toggle:hover {
+            background-color: var(--button-hover);
         }
 
         @media (max-width: 768px) {
@@ -174,6 +244,8 @@
 </head>
 
 <body>
+    <button class="mode-toggle" onclick="toggleMode()">Mode Sombre</button>
+
     <h1>Optimisation Simplexe</h1>
 
     <div id="input-section">
@@ -201,6 +273,17 @@
     <div id="graph-container"></div>
 
     <script>
+        function toggleMode() {
+            const body = document.body;
+            const modeToggle = document.querySelector('.mode-toggle');
+            if (body.classList.contains('dark-mode')) {
+                body.classList.remove('dark-mode');
+                modeToggle.textContent = 'Mode Sombre';
+            } else {
+                body.classList.add('dark-mode');
+                modeToggle.textContent = 'Mode Clair';
+            }
+        }
         function parseExpr(expr) {
             //console.log("Parsing expression:", expr);
             let terms = expr.replace(/\s+/g, '').match(/[+-]?\d*\.?\d*[a-z]/gi);
