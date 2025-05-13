@@ -9,51 +9,65 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         :root {
-            --background-color: #f0f4f8;
-            --text-color: #333;
+            --background-color: #f8f9fa;
+            /* Very Light Gray */
+            --text-color: #2d3748;
+            /* Dark Gray */
             --input-background: #fff;
-            --input-border: #e0e0e0;
-            --button-background: #3498db;
-            /* Blue */
-            --button-hover: #2980b9;
-            /* Darker Blue */
-            --button-active: #1f618d;
-            /* Even Darker Blue */
-            --result-background: #e6f2ff;
-            /* Light Blue */
+            --input-border: #e2e8f0;
+            /* Light Gray Border */
+            --button-background: #4299e1;
+            /* Blue 500 */
+            --button-hover: #3182ce;
+            /* Blue 600 */
+            --button-active: #2b6cb0;
+            /* Blue 700 */
+            --result-background: #e6f0ff;
+            /* Very Light Blue */
             --result-border: #b3d9ff;
-            /* Slightly Darker Light Blue */
-            --table-header: #f2f2f2;
-            --pivot-row: #e0f7fa;
+            /* Light Blue Border */
+            --table-header: #f0f4f8;
+            /* Very Light Grayish Blue */
+            --pivot-row: #f0f4f8;
+            /* Light Cyan */
             --pivot-col: #007bff;
-            --pivot-row-font: #333;
-            /* Default font color for pivot row */
+            /* Primary Blue */
+            --pivot-row-font: #2d3748;
+            /* Dark Gray */
         }
 
         .dark-mode {
-            --background-color: #2c3e50;
-            --text-color: #f0f4f8;
-            --input-background: #34495e;
-            --input-border: #7f8c8d;
-            --button-background: #2980b9;
-            /* Darker Blue */
-            --button-hover: #1f618d;
-            /* Even Darker Blue */
-            --button-active: #1a5276;
-            /* Even Darker Blue */
-            --result-background: #1a2b48;
-            /* Dark Blue */
-            --result-border: #2a4b7c;
-            /* Slightly Lighter Dark Blue */
-            --table-header: #34495e;
-            --pivot-row: #2980b9;
-            /* Darker Blue */
-            --pivot-col: #3498db;
-            /* Blue */
-            --pivot-row-font: #f0f4f8;
-            /* Font color for pivot row in dark mode */
+            --background-color: #1a202c;
+            /* Gray 900 */
+            --text-color: #f7fafc;
+            /* Gray 50 */
+            --input-background: #2d3748;
+            /* Gray 800 */
+            --input-border: #4a5568;
+            /* Gray 600 */
+            --button-background: #667eea;
+            /* Indigo 400 */
+            --button-hover: #5a67d8;
+            /* Indigo 500 */
+            --button-active: #4c51bf;
+            /* Indigo 600 */
+            --result-background: #283149;
+            /* Custom Dark */
+            --result-border: #3e4c66;
+            /* Custom Dark */
+            --table-header: #2d3748;
+            /* Gray 800 */
+            --pivot-row: #2a69ac;
+            /* Blue 700 - darker for contrast */
+            --pivot-col: #b0e0f0;
+            /* Blue 300 - lighter for contrast */
+            --pivot-row-font: #f7fafc;
+            /* Gray 50 */
         }
 
         body {
@@ -77,19 +91,21 @@
 
         th,
         td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            border: 1px solid #cbd5e0;
+            /* Gray 400 */
+            padding: 10px;
             text-align: left;
         }
 
         th {
             background-color: var(--table-header);
+            font-weight: 600;
+            color: var(--text-color);
         }
 
         .pivot-row {
             background-color: var(--pivot-row);
             color: var(--pivot-row-font);
-            /* Font color for pivot row */
         }
 
         .pivot-col {
@@ -106,17 +122,17 @@
         #input-section {
             background-color: var(--input-background);
             padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
-            width: 90%;
+            width: 95%;
             max-width: 600px;
             transition: background-color 0.3s;
         }
 
         #input-section label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             color: var(--text-color);
             font-weight: 500;
         }
@@ -125,10 +141,10 @@
         #input-section textarea,
         #input-section select {
             width: calc(100% - 20px);
-            padding: 0.75rem;
-            margin-bottom: 1rem;
+            padding: 0.8rem;
+            margin-bottom: 1.25rem;
             border: 1px solid var(--input-border);
-            border-radius: 6px;
+            border-radius: 4px;
             transition: border-color 0.3s ease;
             font-size: 1rem;
             background-color: var(--input-background);
@@ -140,60 +156,63 @@
         #input-section select:focus {
             outline: none;
             border-color: var(--button-background);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.3);
+            /* Blue 200 */
         }
 
         #input-section textarea {
             resize: vertical;
-            min-height: 100px;
+            min-height: 120px;
         }
 
         #input-section button {
-            padding: 0.75rem 1.5rem;
+            padding: 0.8rem 1.75rem;
             background-color: var(--button-background);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease;
             font-size: 1.1rem;
             width: 100%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         #input-section button:hover {
             background-color: var(--button-hover);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         #input-section button:active {
             background-color: var(--button-active);
             transform: translateY(0);
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.15);
         }
 
         #result-container {
             background-color: var(--result-background);
-            padding: 1.5rem;
-            border-radius: 10px;
+            padding: 1.75rem;
+            border-radius: 8px;
             margin-top: 2rem;
-            width: 90%;
+            width: 95%;
             max-width: 600px;
             border: 1px solid var(--result-border);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
             transition: background-color 0.3s, border-color 0.3s;
         }
 
         #result-container h3 {
             color: var(--text-color);
-            margin-bottom: 1rem;
-            font-size: 1.25rem;
+            margin-bottom: 1.25rem;
+            font-size: 1.3rem;
             font-weight: 600;
         }
 
         #result-container pre {
             color: var(--text-color);
-            font-family: 'Courier New', monospace;
+            font-family: 'Menlo', monospace;
             white-space: pre-wrap;
-            line-height: 1.5;
+            line-height: 1.6;
             font-size: 1rem;
         }
 
@@ -210,41 +229,93 @@
             background-color: var(--button-background);
             color: white;
             border: none;
-            border-radius: 6px;
-            padding: 0.5rem 1rem;
+            border-radius: 50%;
+            /* Make it a circle */
+            padding: 0.6rem;
+            /* Ajuster le padding pour l'icône */
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease;
+            /* Ajout de la transition pour la rotation */
+            font-size: 0.9rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            /* Augmentation de l'ombre */
+            line-height: 0;
+            /* Supprimer la hauteur de ligne pour centrer verticalement l'icône */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            /* Définir une largeur fixe pour le bouton icône */
+            height: 2.5rem;
+            /* Définir une hauteur fixe pour le bouton icône */
         }
 
         .mode-toggle:hover {
             background-color: var(--button-hover);
+            transform: translateY(-2px) scale(1.1);
+            /* Légère translation et mise à l'échelle au survol */
+        }
+
+        .mode-toggle:active {
+            background-color: var(--button-active);
+            transform: translateY(0) scale(0.9);
+            /* Légère réduction à l'activation */
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+            /* Réduction de l'ombre à l'activation */
+        }
+
+        .mode-toggle i {
+            font-size: 1.5rem;
+            /* Ajuster la taille de l'icône */
+            color: white;
+            transition: transform 0.3s ease;
+            /* Smooth transition for icon rotation */
+        }
+
+        .dark-mode .mode-toggle i {
+            transform: rotate(30deg);
+            /* Rotate the sun icon in dark mode */
         }
 
         @media (max-width: 768px) {
-            #input-section {
-                width: 95%;
-            }
 
-            #result-container {
-                width: 95%;
+            #input-section,
+            #result-container,
+            #graph-container {
+                width: 98%;
             }
         }
 
         @media (max-width: 480px) {
             #input-section button {
                 font-size: 1rem;
-                padding: 0.75rem 1rem;
+                padding: 0.8rem 1.2rem;
             }
 
             #result-container pre {
                 font-size: 0.9rem;
+            }
+
+            .mode-toggle {
+                top: 10px;
+                right: 10px;
+                padding: 0.5rem;
+                font-size: 0.8rem;
+                width: 2.25rem;
+                height: 2.25rem;
+            }
+
+            .mode-toggle i {
+                font-size: 1.25rem;
             }
         }
     </style>
 </head>
 
 <body>
-    <button class="mode-toggle" onclick="toggleMode()">Mode Sombre</button>
+    <button class="mode-toggle" onclick="toggleMode()">
+        <i class="fas fa-moon"></i>
+    </button>
 
     <h1>Optimisation Simplexe</h1>
 
@@ -256,10 +327,11 @@
         </select>
 
         <label for="objective">Fonction objectif :</label>
-        <input type="text" id="objective" value="3x + 2y">
+        <input type="text" id="objective" value="3x + 2y" placeholder="Ex: 3x + 2y (variables séparées par des '+')">
 
         <label for="constraints">Contraintes :</label>
-        <textarea id="constraints" rows="5">x + y >= 4
+        <textarea id="constraints" rows="5"
+            placeholder="Ex: x + y >= 4&#10;2x + y <= 5 (une contrainte par ligne, utilisez >=, <= ou =)">x + y >= 4
 2x + y >= 5</textarea>
 
         <button onclick="solve()">Résoudre</button>
@@ -276,14 +348,25 @@
         function toggleMode() {
             const body = document.body;
             const modeToggle = document.querySelector('.mode-toggle');
-            if (body.classList.contains('dark-mode')) {
-                body.classList.remove('dark-mode');
-                modeToggle.textContent = 'Mode Sombre';
+            const moonIcon = document.querySelector('.mode-toggle i');
+
+            // Toggle the dark mode class on the body
+            body.classList.toggle('dark-mode');
+
+            // Check if dark mode is active
+            const isDarkMode = body.classList.contains('dark-mode');
+
+            // Update the icon based on the current mode
+            if (isDarkMode) {
+                moonIcon.classList.remove('fa-moon');
+                moonIcon.classList.add('fa-sun');
             } else {
-                body.classList.add('dark-mode');
-                modeToggle.textContent = 'Mode Clair';
+                moonIcon.classList.remove('fa-sun');
+                moonIcon.classList.add('fa-moon');
             }
         }
+
+
         function parseExpr(expr) {
             //console.log("Parsing expression:", expr);
             let terms = expr.replace(/\s+/g, '').match(/[+-]?\d*\.?\d*[a-z]/gi);
