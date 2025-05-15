@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Solveur d'optimisation linéaire</title>
+    <title>Visualisation de l'optimisation linéaire</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -46,37 +47,15 @@
             white-space: pre-wrap;
         }
 
-        .table-container {
-            margin-top: 20px;
-        }
-
-        table {
+        #plot {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        th,
-        td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
-        }
-
-        th {
-            background-color: #f0f0f0;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 400px;
-            width: 100%;
-            margin-top: 20px;
+            height: 500px;
         }
     </style>
 </head>
 
 <body>
+
     <h1>Solveur d'optimisation linéaire</h1>
 
     <div id="problem-setup">
@@ -93,7 +72,7 @@
 
         <label for="constraints">Contraintes (une par ligne, ex: 2x + y <= 10):</label>
                 <textarea id="constraints" rows="5" placeholder="Ex:&#10;2x + y <= 10&#10;x + y >= 5">2x + y + 2z <= 8
-3x + 2y + 1z <= 8</textarea>
+3x + 2y + z <= 8</textarea>
 
                 <button onclick="solveProblem()">Résoudre</button>
     </div>
@@ -101,7 +80,7 @@
     <div id="results">
         <h2>Résultats</h2>
         <pre id="output"></pre>
-        <div class="table-container" id="intermediate-steps"></div>
+        <div id="plot"></div>
     </div>
 
     <script>
@@ -116,6 +95,7 @@
                 if (!match) return;
 
                 let [, coeff, variable] = match;
+
                 if (coeff === "" || coeff === "+") coeff = 1;
                 else if (coeff === "-") coeff = -1;
                 else coeff = parseFloat(coeff);
@@ -125,377 +105,225 @@
             return obj;
         }
 
-        function simplexMethod(c, A, b, opType) {
-            const numVars = c.length;
-            const numConstraints = b.length;
-
-            // Initialisation du tableau avec variables d'écart
-            let tableau = [];
-            for (let i = 0; i < numConstraints; i++) {
-                let row = [...A[i]];
-                for (let j = 0; j < numConstraints; j++) {
-                    row.push(i === j ? 1 : 0); // Variables d'écart
-                }
-                row.push(b[i]);
-                tableau[i] = row;
-            }
-
-            // Ligne de la fonction objectif
-            let objectiveRow = [...c.map(coeff => -coeff)];
-            for (let j = 0; j < numConstraints; j++) {
-                objectiveRow.push(0); // Coefficients des variables d'écart
-            }
-            objectiveRow.push(0);
-            tableau.push(objectiveRow);
-
-            let iterations = [];
-            let iterationCount = 0;
-
-            while (true) {
-                iterationCount++;
-                iterations.push({
-                    iteration: iterationCount,
-                    tableau: JSON.parse(JSON.stringify(tableau))
-                });
-
-                // Sélection de la colonne pivot (variable entrante)
-                let pivotCol = -1;
-                let minVal = 0;
-                for (let j = 0; j < numVars; j++) {
-                    if (tableau[numConstraints][j] < minVal) {
-                        minVal = tableau[numConstraints][j];
-                        pivotCol = j;
-                    }
-                }
-                if (pivotCol === -1) break; // Solution optimale trouvée
-
-                // Sélection de la ligne pivot (variable sortante)
-                let pivotRow = -1;
-                let minRatio = Infinity;
-                for (let i = 0; i < numConstraints; i++) {
-                    if (tableau[i][pivotCol] > 0) {
-                        const ratio = tableau[i][numVars + numConstraints] / tableau[i][pivotCol];
-                        if (ratio < minRatio) {
-                            minRatio = ratio;
-                            pivotRow = i;
-                        }
-                    }
-                }
-                if (pivotRow === -1) throw new Error("Problème non borné");
-
-                // Pivotage
-                const pivotVal = tableau[pivotRow][pivotCol];
-                for (let j = 0; j <= numVars + numConstraints; j++) {
-                    tableau[pivotRow][j] /= pivotVal;
-                }
-
-                for (let i = 0; i <= numConstraints; i++) {
-                    if (i !== pivotRow) {
-                        const factor = tableau[i][pivotCol];
-                        for (let j = 0; j <= numVars + numConstraints; j++) {
-                            tableau[i][j] -= factor * tableau[pivotRow][j];
-                        }
-                    }
-                }
-            }
-
-            return iterations;
-        }
-
         function solveProblem() {
             const opType = document.getElementById('opType').value;
             const objectiveExpr = document.getElementById('objective').value;
             const constraintsText = document.getElementById('constraints').value.trim();
 
-            // Analyse la fonction objectif
-            const objParsed = parseExpression(objectiveExpr);
-            const c = Object.values(objParsed);
+            const model = {
+                optimize: "profit",
+                opType: opType,
+                constraints: {},
+                variables: {},
+            };
 
-            // Analyse les contraintes
+            const objParsed = parseExpression(objectiveExpr);
+
+            for (let variable in objParsed) {
+                if (!model.variables[variable]) model.variables[variable] = {};
+                model.variables[variable]["profit"] = objParsed[variable];
+            }
+
             const lines = constraintsText.split('\n');
-            const A = [];
-            const b = [];
-            lines.forEach(line => {
+            lines.forEach((line, index) => {
                 const match = line.match(/(.+?)(<=|>=|=)(.+)/);
                 if (!match) return;
 
                 const [_, lhs, operator, rhs] = match.map(e => e.trim());
                 const lhsParsed = parseExpression(lhs);
                 const rhsValue = parseFloat(rhs);
+                const constraintName = `constraint${index + 1}`;
 
-                A.push(Object.values(lhsParsed));
-                b.push(rhsValue);
+                model.constraints[constraintName] = {};
+                if (operator === "<=") model.constraints[constraintName].max = rhsValue;
+                else if (operator === ">=") model.constraints[constraintName].min = rhsValue;
+                else if (operator === "=") model.constraints[constraintName].equal = rhsValue;
+
+                for (let variable in lhsParsed) {
+                    if (!model.variables[variable]) model.variables[variable] = {};
+                    model.variables[variable][constraintName] = lhsParsed[variable];
+                }
             });
 
             try {
-                const iterations = simplexMethod(c, A, b, opType);
-                displayIntermediateSteps(iterations, A, b, c);
+                const result = solver.Solve(model);
+                document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+                plotResults(model, result);
             } catch (error) {
                 document.getElementById('output').textContent = "Erreur: " + error.message;
             }
         }
 
-        function displayIntermediateSteps(iterations, A, b, c) {
-            const container = document.getElementById('intermediate-steps');
-            container.innerHTML = '<h2>Étapes intermédiaires</h2>';
+        function plotResults(model, result) {
+            const variables = Object.keys(model.variables);
+            const numVariables = variables.length;
 
-            iterations.forEach((iteration, index) => {
-                const table = document.createElement('table');
-                const caption = document.createElement('caption');
-                caption.textContent = `Itération ${index + 1}`;
-                table.appendChild(caption);
-
-                const thead = document.createElement('thead');
-                const headerRow = document.createElement('tr');
-                const variables = ['x', 'y', 's1', 's2', 'z', 'RHS']; // Ajout de RHS
-                variables.forEach(variable => {
-                    const th = document.createElement('th');
-                    th.textContent = variable;
-                    headerRow.appendChild(th);
-                });
-                thead.appendChild(headerRow);
-                table.appendChild(thead);
-
-                const tbody = document.createElement('tbody');
-                iteration.tableau.forEach(row => {
-                    const tr = document.createElement('tr');
-                    row.forEach((value, j) => {
-                        const td = document.createElement('td');
-                        // Vérifier si la valeur est un nombre avant d'appeler toFixed()
-                        if (typeof value === 'number' && !isNaN(value)) {
-                            td.textContent = value.toFixed(2);
-                        } else {
-                            td.textContent = 'N/A'; // ou une autre valeur par défaut
-                        }
-                        tr.appendChild(td);
-                    });
-                    tbody.appendChild(tr);
-                });
-                table.appendChild(tbody);
-
-                container.appendChild(table);
-
-                // Ajout du graphique après chaque tableau
-                if (index === iterations.length - 1) {
-                    const chartContainer = document.createElement('div');
-                    chartContainer.className = 'chart-container';
-                    chartContainer.id = 'chart';
-                    container.appendChild(chartContainer);
-
-                    // Extraction de la solution
-                    const solution = extractSolution(iteration.tableau, c.length);
-                    console.log('Solution:', solution);
-
-                    // Calcul de la valeur de la fonction objectif
-                    const objectiveValue = calculateObjectiveValue(c, solution);
-
-                    // Affichage de la solution
-                    const solutionText = document.createElement('p');
-                    const variables = ['x', 'y', 'z']; // Variables pour l'affichage
-                    const solutionParts = variables.map((varName, i) => `${varName} = ${solution[i].toFixed(4)}`).join(', ');
-                    solutionText.textContent = `Solution optimale: z = ${objectiveValue.toFixed(4)}; ${solutionParts}`;
-                    container.appendChild(solutionText);
-
-                    // Création du graphique
-                    createChart(chartContainer, A, b, solution);
-                }
-            });
-        }
-
-
-        function extractSolution(tableau, numVars) {
-            const solution = new Array(numVars).fill(0);
-            const numConstraints = tableau.length - 1;
-
-            // Parcourir chaque ligne du tableau pour identifier les variables de base
-            for (let i = 0; i < numConstraints; i++) {
-                // Trouver la colonne avec un 1 (variable de base)
-                let basicVarIndex = -1;
-                for (let j = 0; j < numVars; j++) {
-                    if (tableau[i][j] === 1) {
-                        // Vérifier si c'est la seule entrée non nulle dans la colonne
-                        let isBasic = true;
-                        for (let k = 0; k < numConstraints; k++) {
-                            if (k !== i && tableau[k][j] !== 0) {
-                                isBasic = false;
-                                break;
-                            }
-                        }
-                        if (isBasic) {
-                            basicVarIndex = j;
-                            break;
-                        }
-                    }
-                }
-                if (basicVarIndex !== -1) {
-                    solution[basicVarIndex] = tableau[i][tableau[i].length - 1];
-                }
+            if (numVariables === 2) {
+                plot2D(model, result, variables);
+            } else if (numVariables === 3) {
+                plot3D(model, result, variables);
+            } else {
+                console.error("Unsupported number of variables for plotting.");
             }
-
-            return solution;
         }
 
-        function calculateObjectiveValue(c, solution) {
-            let objectiveValue = 0;
-            for (let i = 0; i < solution.length; i++) {
-                objectiveValue += c[i] * solution[i];
-            }
-            return objectiveValue;
-        }
+        function plot2D(model, result, variables) {
+            const [xVar, yVar] = variables;
+            const traces = [];
+            const colors = ['rgba(255, 0, 0, 0.5)', 'rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 255, 0, 0.5)', 'rgba(255, 0, 255, 0.5)'];
 
-        function createChart(container, A, b, solution) {
-            const numVars = A[0].length;
+            // Plot constraints
+            Object.entries(model.constraints).forEach(([name, constraint], index) => {
+                const expr = model.variables[xVar][name] + xVar + " + " + model.variables[yVar][name] + yVar;
+                let yValues = [];
+                let xValues = Array.from({ length: 100 }, (_, i) => i / 10);
 
-            if (numVars === 2) {
-                // Cas 2D (inchangé)
-                const traces = [];
-
-                // Ajouter les contraintes
-                A.forEach((constraint, index) => {
-                    const [a, bCoeff] = constraint;
-                    const c = b[index];
-
-                    const xValues = [];
-                    const yValues = [];
-                    for (let x = 0; x <= 10; x += 0.1) {
-                        const y = (c - a * x) / bCoeff;
-                        xValues.push(x);
-                        yValues.push(y);
-                    }
-
+                if (constraint.max !== undefined) {
+                    yValues = xValues.map(x => (constraint.max - model.variables[xVar][name] * x) / model.variables[yVar][name]);
                     traces.push({
                         x: xValues,
                         y: yValues,
                         mode: 'lines',
-                        name: `Contrainte ${index + 1}: ${a}x + ${bCoeff}y <= ${c}`,
-                        line: {
-                            color: getRandomColor()
-                        }
+                        name: `${expr} <= ${constraint.max}`,
+                        line: { color: colors[index % colors.length], dash: 'dash' }
                     });
-                });
+                } else if (constraint.min !== undefined) {
+                    yValues = xValues.map(x => (constraint.min - model.variables[xVar][name] * x) / model.variables[yVar][name]);
+                    traces.push({
+                        x: xValues,
+                        y: yValues,
+                        mode: 'lines',
+                        name: `${expr} >= ${constraint.min}`,
+                        line: { color: colors[index % colors.length], dash: 'dash' }
+                    });
+                } else if (constraint.equal !== undefined) {
+                    yValues = xValues.map(x => (constraint.equal - model.variables[xVar][name] * x) / model.variables[yVar][name]);
+                    traces.push({
+                        x: xValues,
+                        y: yValues,
+                        mode: 'lines',
+                        name: `${expr} = ${constraint.equal}`,
+                        line: { color: colors[index % colors.length] }
+                    });
+                }
+            });
 
-                // Ajouter les axes
-                traces.push({
-                    x: [0, 10],
-                    y: [0, 0],
-                    mode: 'lines',
-                    name: 'Axe X',
-                    line: {
-                        color: 'black',
-                        width: 1
-                    }
-                });
+            // Plot solution
+            const solution = {
+                x: [result[xVar] || 0],
+                y: [result[yVar] || 0],
+                mode: 'markers',
+                name: 'Solution',
+                marker: { size: 12, color: 'red' }
+            };
+            traces.push(solution);
 
-                traces.push({
-                    x: [0, 0],
-                    y: [0, 10],
-                    mode: 'lines',
-                    name: 'Axe Y',
-                    line: {
-                        color: 'black',
-                        width: 1
-                    }
-                });
+            const layout = {
+                title: 'Optimisation linéaire 2D',
+                xaxis: { range: [0, 10] },
+                yaxis: { range: [0, 10] }
+            };
 
-                // Ajouter la solution
-                traces.push({
-                    x: [solution[0]],
-                    y: [solution[1]],
-                    mode: 'markers',
-                    name: 'Solution optimale',
-                    marker: {
-                        color: 'red',
-                        size: 10
-                    }
-                });
+            Plotly.newPlot('plot', traces, layout);
+        }
 
-                const layout = {
-                    title: 'Représentation graphique des contraintes et de la solution',
-                    xaxis: {
-                        range: [0, 10],
-                        title: 'x'
-                    },
-                    yaxis: {
-                        range: [0, 10],
-                        title: 'y'
-                    }
-                };
+        function plot3D(model, result, variables) {
+            const [xVar, yVar, zVar] = variables;
+            const traces = [];
+            const colors = ['rgba(255, 0, 0, 0.5)', 'rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 255, 0, 0.5)', 'rgba(255, 0, 255, 0.5)'];
 
-                Plotly.newPlot(container, traces, layout);
-            } else if (numVars === 3) {
-                // Cas 3D
-                const traces = [];
+            // Plot solution
+            const solution = {
+                x: [result[xVar] || 0],
+                y: [result[yVar] || 0],
+                z: [result[zVar] || 0],
+                mode: 'markers+text',
+                type: 'scatter3d',
+                name: 'Solution optimale',
+                text: [`Valeur optimale : ${result.result ? result.result.toFixed(4) : 'N/A'}`],
+                marker: { size: 6, color: 'red' },
+                textposition: 'top center'
+            };
+            traces.push(solution);
 
-                // Ajouter les contraintes (simplifié pour 3D)
-                A.forEach((constraint, index) => {
-                    const [a, bCoeff, cCoeff] = constraint;
-                    const d = b[index];
+            // Add constraints as surfaces
+            Object.entries(model.constraints).forEach(([name, constraint], index) => {
+                const expr = model.variables[xVar][name] + xVar + " + " + model.variables[yVar][name] + yVar + " + " + model.variables[zVar][name] + zVar;
+                let inequality = constraint.max !== undefined ? '<=' : (constraint.min !== undefined ? '>=' : '=');
+                let b = constraint.max !== undefined ? constraint.max : (constraint.min !== undefined ? constraint.min : constraint.equal);
+                let coeffs = { [xVar]: model.variables[xVar][name], [yVar]: model.variables[yVar][name], [zVar]: model.variables[zVar][name] };
 
-                    // Simplification pour 3D (affichage de plans)
-                    const xValues = [];
-                    const yValues = [];
-                    const zValues = [];
-                    for (let x = 0; x <= 10; x += 1) {
-                        for (let y = 0; y <= 10; y += 1) {
-                            const z = (d - a * x - bCoeff * y) / cCoeff;
+                let xRange = [0, parseFloat(b) / coeffs[xVar]];
+                let yRange = [0, parseFloat(b) / coeffs[yVar]];
+
+                if (inequality === '>=') {
+                    xRange = xRange.map(x => -x);
+                    yRange = yRange.map(y => -y);
+                }
+
+                let xValues = [];
+                let yValues = [];
+                let zValues = [];
+
+                for (let x = xRange[0]; x <= xRange[1]; x += 0.5) {
+                    for (let y = yRange[0]; y <= yRange[1]; y += 0.5) {
+                        let z = (parseFloat(b) - coeffs[xVar] * x - coeffs[yVar] * y) / coeffs[zVar];
+                        if (z >= 0) {
                             xValues.push(x);
                             yValues.push(y);
                             zValues.push(z);
                         }
                     }
+                }
 
-                    traces.push({
-                        x: xValues,
-                        y: yValues,
-                        z: zValues,
-                        mode: 'markers',
-                        name: `Contrainte ${index + 1}: ${a}x + ${bCoeff}y + ${cCoeff}z <= ${d}`,
-                        marker: {
-                            color: getRandomColor(),
-                            size: 2
-                        },
-                        type: 'scatter3d'
-                    });
-                });
+                // Create a meshgrid for the surface plot
+                let xGrid = [];
+                let yGrid = [];
+                let zGrid = [];
+                let xStep = xRange[1] / 10;
+                let yStep = yRange[1] / 10;
 
-                // Ajouter la solution
-                traces.push({
-                    x: [solution[0]],
-                    y: [solution[1]],
-                    z: [solution[2]],
-                    mode: 'markers',
-                    name: 'Solution optimale',
-                    marker: {
-                        color: 'red',
-                        size: 10
-                    },
-                    type: 'scatter3d'
-                });
-
-                const layout = {
-                    title: 'Représentation graphique des contraintes et de la solution (3D)',
-                    scene: {
-                        xaxis: { title: 'x' },
-                        yaxis: { title: 'y' },
-                        zaxis: { title: 'z' },
-                        camera: {
-                            eye: { x: 1.5, y: 1.5, z: 1.5 } // Ajustez ces valeurs pour changer l'orientation
+                for (let x = xRange[0]; x <= xRange[1]; x += xStep) {
+                    let xRow = [];
+                    let yRow = [];
+                    let zRow = [];
+                    for (let y = yRange[0]; y <= yRange[1]; y += yStep) {
+                        let z = (parseFloat(b) - coeffs[xVar] * x - coeffs[yVar] * y) / coeffs[zVar];
+                        if (z >= 0) {
+                            xRow.push(x);
+                            yRow.push(y);
+                            zRow.push(z);
                         }
                     }
+                    xGrid.push(xRow);
+                    yGrid.push(yRow);
+                    zGrid.push(zRow);
+                }
+
+                let constraintTrace = {
+                    x: xGrid,
+                    y: yGrid,
+                    z: zGrid,
+                    type: 'surface',
+                    name: `Contrainte ${index + 1}`,
+                    opacity: 0.5,
+                    colorscale: [[0, colors[index % colors.length]], [1, colors[index % colors.length]]],
+                    showscale: false
                 };
 
-                Plotly.newPlot(container, traces, layout);
-            }
-        }
+                traces.push(constraintTrace);
+            });
 
+            const layout = {
+                title: 'Optimisation linéaire 3D',
+                scene: {
+                    xaxis: { title: xVar },
+                    yaxis: { title: yVar },
+                    zaxis: { title: zVar }
+                }
+            };
 
-        function getRandomColor() {
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
-            return color;
+            Plotly.newPlot('plot', traces, layout);
         }
     </script>
 </body>
