@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solveur Simplexe Complet</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    label,
+    select,
+    input {
+      display: block;
+      margin: 10px 0;
+    }
+
+    .constraint {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .tableau {
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    .tableau th,
+    .tableau td {
+      border: 1px solid #ccc;
+      padding: 5px 10px;
+      text-align: center;
+    }
+
+    .pivot {
+      background-color: #ffe599;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Solveur Simplexe (Tous cas)</h1>
+
+  <label for="optimizationType">Type d'optimisation :</label>
+  <select id="optimizationType">
+    <option value="max">Maximisation</option>
+    <option value="min">Minimisation</option>
+  </select>
+
+  <label for="objective">Fonction objectif :</label>
+  <input type="text" id="objective" placeholder="Ex: 3x + 4y - z">
+
+  <h3>Contraintes</h3>
+  <div id="constraints"></div>
+  <button onclick="addConstraint()">Ajouter une contrainte</button>
+  <br><br>
+  <button onclick="runSimplex()">Calculer</button>
+
+  <div id="output"></div>
+
+  <script>
+    let constraintCount = 0;
+
+    function addConstraint() {
+      const container = document.getElementById("constraints");
+      const div = document.createElement("div");
+      div.className = "constraint";
+      div.innerHTML = `
+        <input type="text" placeholder="Ex: 2x + 3y - z" class="lhs">
+        <select class="operator">
+          <option value="<="><=</option>
+          <option value=">=">>=</option>
+          <option value="=">=</option>
+        </select>
+        <input type="number" placeholder="Valeur" class="rhs">
+      `;
+      container.appendChild(div);
+    }
+
+    function parseLinearExpr(expr) {
+      const terms = expr.match(/([+-]?\s*\d*\.?\d*\s*[a-zA-Z]+)/g);
+      const parsed = {};
+      if (!terms) return parsed;
+      for (let term of terms) {
+        term = term.replace(/\s+/g, "");
+        const match = term.match(/^([+-]?\d*\.?\d*)([a-zA-Z]+)$/);
+        if (!match) continue;
+        let [, coeff, variable] = match;
+        if (coeff === "" || coeff === "+") coeff = 1;
+        else if (coeff === "-") coeff = -1;
+        else coeff = parseFloat(coeff);
+        parsed[variable] = coeff;
+      }
+      return parsed;
+    }
+
+    function deepCopy(matrix) {
+      return matrix.map(row => row.slice());
+    }
+
+    function printTableau(tableau, headers, step, pivot = null) {
+      const div = document.createElement("div");
+      div.innerHTML = `<h3>Tableau ${step}</h3>`;
+      const table = document.createElement("table");
+      table.className = "tableau";
+
+      const thead = document.createElement("thead");
+      const trh = document.createElement("tr");
+      headers.forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        trh.appendChild(th);
+      });
+      thead.appendChild(trh);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      tableau.forEach((row, i) => {
+        const tr = document.createElement("tr");
+        row.forEach((val, j) => {
+          const td = document.createElement("td");
+          td.textContent = Number(val).toFixed(4);
+          if (pivot && pivot.i === i && pivot.j === j) td.classList.add("pivot");
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      div.appendChild(table);
+      document.getElementById("output").appendChild(div);
+    }
+
+    function runSimplex() {
+      const type = document.getElementById("optimizationType").value;
+      const objExpr = document.getElementById("objective").value;
+      const objective = parseLinearExpr(objExpr);
+      const constraintsDiv = document.querySelectorAll(".constraint");
+      const constraints = [];
+
+      for (let c of constraintsDiv) {
+        const lhs = parseLinearExpr(c.querySelector(".lhs").value);
+        const op = c.querySelector(".operator").value;
+        const rhs = parseFloat(c.querySelector(".rhs").value);
+        constraints.push({ lhs, op, rhs });
+      }
+
+      const output = document.getElementById("output");
+      output.innerHTML = "";
+
+      const variables = new Set();
+      for (const v in objective) variables.add(v);
+      for (const c of constraints) for (const v in c.lhs) variables.add(v);
+      const varList = Array.from(variables);
+
+      let tableau = [];
+      let base = [];
+      let varIndex = varList.length;
+      let slackCount = 0;
+      let artifCount = 0;
+
+      constraints.forEach((c, i) => {
+        const row = new Array(varList.length).fill(0);
+        varList.forEach((v, j) => {
+          if (v in c.lhs) row[j] = c.lhs[v];
+        });
+        if (c.op === '<=') {
+          row.push(1); base.push(`s${++slackCount}`);
+        } else if (c.op === '>=') {
+          row.push(-1); row.push(1); base.push(`a${++artifCount}`);
+        } else {
+          row.push(0); row.push(1); base.push(`a${++artifCount}`);
+        }
+        row.push(c.rhs);
+        tableau.push(row);
+      });
+
+      const zRow = new Array(tableau[0].length).fill(0);
+      varList.forEach((v, i) => {
+        zRow[i] = type === "max" ? -objective[v] || 0 : objective[v] || 0;
+      });
+      tableau.push(zRow);
+
+      const headers = [...varList];
+      for (let i = 1; i <= slackCount; i++) headers.push(`s${i}`);
+      for (let i = 1; i <= artifCount; i++) headers.push(`a${i}`);
+      headers.push("RHS");
+
+      let step = 1;
+      while (true) {
+        printTableau(tableau, headers, step);
+        const lastRow = tableau[tableau.length - 1];
+        let pivotCol = lastRow.slice(0, -1).reduce((minIdx, val, idx, arr) => val < arr[minIdx] ? idx : minIdx, 0);
+        if (lastRow[pivotCol] >= 0) break;
+        let pivotRow = -1;
+        let minRatio = Infinity;
+        for (let i = 0; i < tableau.length - 1; i++) {
+          const val = tableau[i][pivotCol];
+          if (val > 0) {
+            const ratio = tableau[i][tableau[i].length - 1] / val;
+            if (ratio < minRatio) {
+              minRatio = ratio;
+              pivotRow = i;
+            }
+          }
+        }
+        if (pivotRow === -1) {
+          output.innerHTML += "<p>Solution non bornée.</p>";
+          return;
+        }
+
+        const pivot = tableau[pivotRow][pivotCol];
+        tableau[pivotRow] = tableau[pivotRow].map(v => v / pivot);
+        for (let i = 0; i < tableau.length; i++) {
+          if (i !== pivotRow) {
+            const coeff = tableau[i][pivotCol];
+            tableau[i] = tableau[i].map((v, j) => v - coeff * tableau[pivotRow][j]);
+          }
+        }
+
+        printTableau(tableau, headers, ++step, { i: pivotRow, j: pivotCol });
+      }
+
+      const result = tableau[tableau.length - 1][tableau[0].length - 1];
+      output.innerHTML += `<p><strong>Solution optimale :</strong> ${type === "max" ? "Max Z = " : "Min Z = "}${result.toFixed(4)}</p>`;
+
+      // Affichage des variables de décision
+      const variableValues = {};
+      varList.forEach((v, idx) => {
+        variableValues[v] = 0;
+        for (let i = 0; i < tableau.length - 1; i++) {
+          const col = tableau[i][idx];
+          const isBasic = tableau.every((row, rowIndex) => rowIndex === i || row[idx] === 0);
+          if (col === 1 && isBasic) {
+            variableValues[v] = tableau[i][tableau[i].length - 1];
+            break;
+          }
+        }
+      });
+
+      output.innerHTML += `<p><strong>Valeurs des variables :</strong></p><ul>${Object.entries(variableValues).map(([v, val]) => `<li>${v} = ${val.toFixed(4)}</li>`).join('')}</ul>`;
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,767 @@
+    <!-- <!DOCTYPE html>
+    <html lang="fr">
+
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solveur Simplexe Complet</title>
+    <style>
+        body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        }
+
+        label,
+        select,
+        input {
+        display: block;
+        margin: 10px 0;
+        }
+
+        .constraint {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        }
+
+        .tableau {
+        margin-top: 20px;
+        border-collapse: collapse;
+        }
+
+        .tableau th,
+        .tableau td {
+        border: 1px solid #ccc;
+        padding: 5px 10px;
+        text-align: center;
+        }
+
+        .pivot {
+        background-color: #ffe599;
+        }
+
+        .phase {
+        background-color: #f0f0f0;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        }
+    </style>
+    </head>
+
+    <body>
+    <h1>Solveur Simplexe (Tous cas)</h1>
+
+    <label for="optimizationType">Type d'optimisation :</label>
+    <select id="optimizationType">
+        <option value="max">Maximisation</option>
+        <option value="min">Minimisation</option>
+    </select>
+
+    <label for="objective">Fonction objectif :</label>
+    <input type="text" id="objective" placeholder="Ex: 3x + 4y - z">
+
+    <h3>Contraintes</h3>
+    <div id="constraints"></div>
+    <button onclick="addConstraint()">Ajouter une contrainte</button>
+    <br><br>
+    <button onclick="runSimplex()">Calculer</button>
+
+    <div id="output"></div>
+
+    <script>
+        let constraintCount = 0;
+
+        function addConstraint() {
+        const container = document.getElementById("constraints");
+        const div = document.createElement("div");
+        div.className = "constraint";
+        div.innerHTML = `
+            <input type="text" placeholder="Ex: 2x + 3y - z" class="lhs">
+            <select class="operator">
+            <option value="<="><=</option>
+            <option value=">=">>=</option>
+            <option value="=">=</option>
+            </select>
+            <input type="number" placeholder="Valeur" class="rhs">
+        `;
+        container.appendChild(div);
+        }
+
+        function parseLinearExpr(expr) {
+        const terms = expr.match(/([+-]?\s*\d*\.?\d*\s*[a-zA-Z]+)/g);
+        const parsed = {};
+        if (!terms) return parsed;
+        for (let term of terms) {
+            term = term.replace(/\s+/g, "");
+            const match = term.match(/^([+-]?\d*\.?\d*)([a-zA-Z]+)$/);
+            if (!match) continue;
+            let [, coeff, variable] = match;
+            if (coeff === "" || coeff === "+") coeff = 1;
+            else if (coeff === "-") coeff = -1;
+            else coeff = parseFloat(coeff);
+            parsed[variable] = coeff;
+        }
+        return parsed;
+        }
+
+        function deepCopy(matrix) {
+        return matrix.map(row => row.slice());
+        }
+
+        function printTableau(tableau, headers, step, pivot = null, phase = null) {
+        const div = document.createElement("div");
+        if (phase) {
+            div.innerHTML = `<h3>Phase ${phase} - Tableau ${step}</h3>`;
+        } else {
+            div.innerHTML = `<h3>Tableau ${step}</h3>`;
+        }
+        const table = document.createElement("table");
+        table.className = "tableau";
+
+        const thead = document.createElement("thead");
+        const trh = document.createElement("tr");
+        headers.forEach(h => {
+            const th = document.createElement("th");
+            th.textContent = h;
+            trh.appendChild(th);
+        });
+        thead.appendChild(trh);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        tableau.forEach((row, i) => {
+            const tr = document.createElement("tr");
+            row.forEach((val, j) => {
+            const td = document.createElement("td");
+            td.textContent = Number(val).toFixed(4);
+            if (pivot && pivot.i === i && pivot.j === j) td.classList.add("pivot");
+            tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        div.appendChild(table);
+        document.getElementById("output").appendChild(div);
+        }
+
+        function runSimplex() {
+        const type = document.getElementById("optimizationType").value;
+        const objExpr = document.getElementById("objective").value;
+        const objective = parseLinearExpr(objExpr);
+        const constraintsDiv = document.querySelectorAll(".constraint");
+        const constraints = [];
+
+        for (let c of constraintsDiv) {
+            const lhs = parseLinearExpr(c.querySelector(".lhs").value);
+            const op = c.querySelector(".operator").value;
+            const rhs = parseFloat(c.querySelector(".rhs").value);
+            constraints.push({ lhs, op, rhs });
+        }
+
+        const output = document.getElementById("output");
+        output.innerHTML = "";
+
+        const variables = new Set();
+        for (const v in objective) variables.add(v);
+        for (const c of constraints) for (const v in c.lhs) variables.add(v);
+        const varList = Array.from(variables);
+
+        // Phase 1: Setup
+        let tableau = [];
+        let base = [];
+        let slackCount = 0;
+        let artifCount = 0;
+        let needPhase1 = false;
+
+        // Create initial tableau with slack, surplus and artificial variables
+        constraints.forEach((c, i) => {
+            const row = new Array(varList.length).fill(0);
+            varList.forEach((v, j) => {
+            if (v in c.lhs) row[j] = c.lhs[v];
+            });
+
+            if (c.op === '<=') {
+            // Add slack variable
+            row.push(1);
+            base.push(`s${++slackCount}`);
+            } else if (c.op === '>=') {
+            // Add surplus and artificial variables
+            row.push(-1);
+            row.push(1);
+            base.push(`a${++artifCount}`);
+            needPhase1 = true;
+            } else {
+            // Add artificial variable for equality
+            row.push(1);
+            base.push(`a${++artifCount}`);
+            needPhase1 = true;
+            }
+
+            row.push(c.rhs);
+            tableau.push(row);
+        });
+
+        // Add objective function row
+        const zRow = new Array(tableau[0].length).fill(0);
+        varList.forEach((v, i) => {
+            zRow[i] = -objective[v] || 0
+
+        });
+        tableau.push(zRow);
+
+        // Prepare headers
+        const headers = [...varList];
+        for (let i = 1; i <= slackCount; i++) headers.push(`s${i}`);
+        for (let i = 1; i <= artifCount; i++) headers.push(`a${i}`);
+        headers.push("RHS");
+
+        let step = 1;
+        let phase1Tableau = null;
+        let phase1Base = null;
+
+        if (needPhase1) {
+            // Phase 1: Minimize sum of artificial variables
+            output.innerHTML += '<div class="phase"><h2>Phase 1: Elimination des variables artificielles</h2></div>';
+            
+            // Create phase 1 tableau (copy of original tableau without objective row)
+            phase1Tableau = tableau.slice(0, -1).map(row => row.slice());
+            
+            // Add phase 1 objective row: minimize sum of artificial variables
+            const phase1ObjRow = new Array(phase1Tableau[0].length).fill(0);
+            for (let i = 0; i < phase1Tableau.length; i++) {
+            if (base[i].startsWith('a')) {
+                const aIndex = headers.indexOf(base[i]);
+                for (let j = 0; j < phase1ObjRow.length; j++) {
+                phase1ObjRow[j] -= phase1Tableau[i][j];
+                }
+            }
+            }
+            phase1Tableau.push(phase1ObjRow);
+            phase1Base = [...base];
+
+            // Solve phase 1
+            let phase1Step = 1;
+            while (true) {
+            printTableau(phase1Tableau, headers, phase1Step, null, 1);
+            const lastRow = phase1Tableau[phase1Tableau.length - 1];
+            let pivotCol = lastRow.slice(0, -1).reduce((minIdx, val, idx, arr) => 
+                val < arr[minIdx] ? idx : minIdx, 0);
+            
+            if (lastRow[pivotCol] >= -1e-10) break; // Stop when all coefficients are non-negative
+            
+            let pivotRow = -1;
+            let minRatio = Infinity;
+            for (let i = 0; i < phase1Tableau.length - 1; i++) {
+                const val = phase1Tableau[i][pivotCol];
+                if (val > 0) {
+                const ratio = phase1Tableau[i][phase1Tableau[i].length - 1] / val;
+                if (ratio < minRatio) {
+                    minRatio = ratio;
+                    pivotRow = i;
+                }
+                }
+            }
+            
+            if (pivotRow === -1) {
+                output.innerHTML += "<p>Probleme non realisable (phase 1).</p>";
+                return;
+            }
+
+            // Perform pivot
+            const pivot = phase1Tableau[pivotRow][pivotCol];
+            phase1Tableau[pivotRow] = phase1Tableau[pivotRow].map(v => v / pivot);
+            for (let i = 0; i < phase1Tableau.length; i++) {
+                if (i !== pivotRow) {
+                const coeff = phase1Tableau[i][pivotCol];
+                phase1Tableau[i] = phase1Tableau[i].map((v, j) => v - coeff * phase1Tableau[pivotRow][j]);
+                }
+            }
+
+            // Update base
+            phase1Base[pivotRow] = headers[pivotCol];
+
+            phase1Step++;
+            }
+
+            // Check if all artificial variables are zero
+            const phase1ObjValue = phase1Tableau[phase1Tableau.length - 1][phase1Tableau[0].length - 1];
+            if (Math.abs(phase1ObjValue) > 1e-6) {
+            output.innerHTML += "<p>Pas de solution realisable.</p>";
+            return;
+            }
+
+            // Remove artificial variables from base and prepare for phase 2
+            const phase2Tableau = phase1Tableau.slice(0, -1).map(row => {
+            // Remove columns of artificial variables
+            const newRow = [];
+            for (let j = 0; j < row.length; j++) {
+                if (!headers[j].startsWith('a')) {
+                newRow.push(row[j]);
+                }
+            }
+            return newRow;
+            });
+
+            // Update headers for phase 2
+            const phase2Headers = headers.filter(h => !h.startsWith('a'));
+
+            // Add original objective row
+            const originalZRow = new Array(phase2Headers.length).fill(0);
+            varList.forEach((v, i) => {
+            //   originalZRow[i] = type === "max" ? -objective[v] || 0 : objective[v] || 0;
+        originalZRow[i] = (type === "max" ? -objective[v] : objective[v]) || 0;
+
+
+
+            });
+            
+            // Adjust for basic variables in the objective
+            for (let i = 0; i < phase2Tableau.length; i++) {
+            const basicVar = phase1Base[i];
+            if (varList.includes(basicVar)) {
+                const varIndex = varList.indexOf(basicVar);
+                // const coeff = type === "max" ? -objective[basicVar] || 0 : objective[basicVar] || 0;
+    const coeff = (type === "max" ? -objective[basicVar] : objective[basicVar]) || 0;
+
+                for (let j = 0; j < originalZRow.length; j++) {
+                originalZRow[j] -= coeff * phase2Tableau[i][j];
+                }
+            }
+            }
+            
+            phase2Tableau.push(originalZRow);
+            tableau = phase2Tableau;
+            headers.length = 0;
+            headers.push(...phase2Headers);
+            
+            output.innerHTML += '<div class="phase"><h2>Phase 2: Optimisation de la fonction objectif originale</h2></div>';
+            step = 1;
+        }
+
+        // Phase 2: Optimize original objective
+        while (true) {
+            printTableau(tableau, headers, step, null, needPhase1 ? 2 : null);
+            const lastRow = tableau[tableau.length - 1];
+            
+            // Determine pivot column based on optimization type
+            let pivotCol;
+            if (type === "max") {
+            pivotCol = lastRow.slice(0, -1).reduce((minIdx, val, idx, arr) => 
+                val < arr[minIdx] ? idx : minIdx, 0);
+            } else {
+            pivotCol = lastRow.slice(0, -1).reduce((maxIdx, val, idx, arr) => 
+                val > arr[maxIdx] ? idx : maxIdx, 0);
+            }
+            
+            // Check for optimality
+            if ((type === "max" && lastRow[pivotCol] >= -1e-10) || 
+                (type === "min" && lastRow[pivotCol] <= 1e-10)) {
+            break;
+            }
+            
+            // Find pivot row
+            let pivotRow = -1;
+            let minRatio = Infinity;
+            for (let i = 0; i < tableau.length - 1; i++) {
+            const val = tableau[i][pivotCol];
+            if (val > 0) {
+                const ratio = tableau[i][tableau[i].length - 1] / val;
+                if (ratio < minRatio) {
+                minRatio = ratio;
+                pivotRow = i;
+                }
+            }
+            }
+            
+            if (pivotRow === -1) {
+            output.innerHTML += "<p>Solution non bornee.</p>";
+            return;
+            }
+
+            // Perform pivot
+            const pivot = tableau[pivotRow][pivotCol];
+            tableau[pivotRow] = tableau[pivotRow].map(v => v / pivot);
+            for (let i = 0; i < tableau.length; i++) {
+            if (i !== pivotRow) {
+                const coeff = tableau[i][pivotCol];
+                tableau[i] = tableau[i].map((v, j) => v - coeff * tableau[pivotRow][j]);
+            }
+            }
+
+            step++;
+        }
+
+        // Display results
+        //   const result = tableau[tableau.length - 1][tableau[0].length - 1];
+        //   output.innerHTML += `<p><strong>Solution optimale :</strong> ${type === "max" ? "Max Z = " : "Min Z = "}${result.toFixed(4)}</p>`;
+    let result = tableau[tableau.length - 1][tableau[0].length - 1];
+    if (type === "min") result = -result;
+    const label = type === "max" ? "Max Z = " : "Min Z = ";
+    output.innerHTML += `<p><strong>Solution optimale :</strong> ${label}${result.toFixed(4)}</p>`;
+
+
+
+        // Display variable values
+        const variableValues = {};
+        varList.forEach((v, idx) => {
+            variableValues[v] = 0;
+            for (let i = 0; i < tableau.length - 1; i++) {
+            let isBasic = true;
+            for (let j = 0; j < tableau.length - 1; j++) {
+                if (j !== i && Math.abs(tableau[j][idx]) > 1e-6) {
+                isBasic = false;
+                break;
+                }
+            }
+            if (Math.abs(tableau[i][idx] - 1) < 1e-6 && isBasic) {
+                variableValues[v] = tableau[i][tableau[i].length - 1];
+                break;
+            }
+            }
+        });
+        
+        output.innerHTML += `<p><strong>Valeurs des variables :</strong></p><ul>${Object.entries(variableValues).map(([v, val]) => `<li>${v} = ${val.toFixed(4)}</li>`).join('')}</ul>`;
+        }
+    </script>
+    </body>
+
+    </html> -->
+
+
+
+
+
+
+    <!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visualisation de l'optimisation linéaire</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input,
+        select,
+        textarea {
+            display: block;
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #output {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+
+        #plot {
+            width: 100%;
+            height: 500px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Solveur d'optimisation linéaire</h1>
+
+    <div id="problem-setup">
+        <h2>Définir le problème</h2>
+
+        <label for="opType">Type d'optimisation :</label>
+        <select id="opType">
+            <option value="max">Maximiser</option>
+            <option value="min">Minimiser</option>
+        </select>
+
+        <label for="objective">Fonction objectif (ex: 5x + 3y):</label>
+        <input id="objective" type="text" placeholder="Ex: 5x + 3y" value="4x + 3y + 2z" />
+
+        <label for="constraints">Contraintes (une par ligne, ex: 2x + y <= 10):</label>
+                <textarea id="constraints" rows="5" placeholder="Ex:&#10;2x + y <= 10&#10;x + y >= 5">2x + y + 2z <= 8
+3x + 2y + z <= 8</textarea>
+
+                <button onclick="solveProblem()">Résoudre</button>
+    </div>
+
+    <div id="results">
+        <h2>Résultats</h2>
+        <pre id="output"></pre>
+        <div id="plot"></div>
+    </div>
+
+    <script>
+        function parseExpression(expr) {
+            const terms = expr.match(/([+-]?\s*\d*\.?\d*\s*[a-zA-Z]+)/g);
+            const obj = {};
+            if (!terms) return obj;
+
+            terms.forEach(term => {
+                term = term.replace(/\s+/g, '');
+                const match = term.match(/^([+-]?\d*\.?\d*)([a-zA-Z]+)$/);
+                if (!match) return;
+
+                let [, coeff, variable] = match;
+
+                if (coeff === "" || coeff === "+") coeff = 1;
+                else if (coeff === "-") coeff = -1;
+                else coeff = parseFloat(coeff);
+
+                obj[variable] = coeff;
+            });
+            return obj;
+        }
+
+        function solveProblem() {
+            const opType = document.getElementById('opType').value;
+            const objectiveExpr = document.getElementById('objective').value;
+            const constraintsText = document.getElementById('constraints').value.trim();
+
+            const model = {
+                optimize: "profit",
+                opType: opType,
+                constraints: {},
+                variables: {},
+            };
+
+            const objParsed = parseExpression(objectiveExpr);
+
+            for (let variable in objParsed) {
+                if (!model.variables[variable]) model.variables[variable] = {};
+                model.variables[variable]["profit"] = objParsed[variable];
+            }
+
+            const lines = constraintsText.split('\n');
+            lines.forEach((line, index) => {
+                const match = line.match(/(.+?)(<=|>=|=)(.+)/);
+                if (!match) return;
+
+                const [_, lhs, operator, rhs] = match.map(e => e.trim());
+                const lhsParsed = parseExpression(lhs);
+                const rhsValue = parseFloat(rhs);
+                const constraintName = `constraint${index + 1}`;
+
+                model.constraints[constraintName] = {};
+                if (operator === "<=") model.constraints[constraintName].max = rhsValue;
+                else if (operator === ">=") model.constraints[constraintName].min = rhsValue;
+                else if (operator === "=") model.constraints[constraintName].equal = rhsValue;
+
+                for (let variable in lhsParsed) {
+                    if (!model.variables[variable]) model.variables[variable] = {};
+                    model.variables[variable][constraintName] = lhsParsed[variable];
+                }
+            });
+
+            try {
+                console.log("Model:", model);
+                const result = solver.Solve(model);
+                document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+                plotResults(model, result);
+            } catch (error) {
+                document.getElementById('output').textContent = "Erreur: " + error.message;
+            }
+        }
+
+        function plotResults(model, result) {
+            const variables = Object.keys(model.variables);
+            const numVariables = variables.length;
+
+            if (numVariables === 2) {
+                plot2D(model, result, variables);
+            } else if (numVariables === 3) {
+                plot3D(model, result, variables);
+            } else {
+                console.error("Unsupported number of variables for plotting.");
+            }
+        }
+
+        function plot2D(model, result, variables) {
+            const [xVar, yVar] = variables;
+            const traces = [];
+            const colors = ['rgba(255, 0, 0, 0.5)', 'rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 255, 0, 0.5)', 'rgba(255, 0, 255, 0.5)'];
+
+            // Plot constraints
+            Object.entries(model.constraints).forEach(([name, constraint], index) => {
+                const expr = model.variables[xVar][name] + xVar + " + " + model.variables[yVar][name] + yVar;
+                let yValues = [];
+                let xValues = Array.from({ length: 100 }, (_, i) => i / 10);
+
+                if (constraint.max !== undefined) {
+                    yValues = xValues.map(x => (constraint.max - model.variables[xVar][name] * x) / model.variables[yVar][name]);
+                    traces.push({
+                        x: xValues,
+                        y: yValues,
+                        mode: 'lines',
+                        name: `${expr} <= ${constraint.max}`,
+                        line: { color: colors[index % colors.length], dash: 'dash' }
+                    });
+                } else if (constraint.min !== undefined) {
+                    yValues = xValues.map(x => (constraint.min - model.variables[xVar][name] * x) / model.variables[yVar][name]);
+                    traces.push({
+                        x: xValues,
+                        y: yValues,
+                        mode: 'lines',
+                        name: `${expr} >= ${constraint.min}`,
+                        line: { color: colors[index % colors.length], dash: 'dash' }
+                    });
+                } else if (constraint.equal !== undefined) {
+                    yValues = xValues.map(x => (constraint.equal - model.variables[xVar][name] * x) / model.variables[yVar][name]);
+                    traces.push({
+                        x: xValues,
+                        y: yValues,
+                        mode: 'lines',
+                        name: `${expr} = ${constraint.equal}`,
+                        line: { color: colors[index % colors.length] }
+                    });
+                }
+            });
+
+            // Plot solution
+            const solution = {
+                x: [result[xVar] || 0],
+                y: [result[yVar] || 0],
+                mode: 'markers',
+                name: 'Solution',
+                marker: { size: 12, color: 'red' }
+            };
+            traces.push(solution);
+
+            const layout = {
+                title: 'Optimisation linéaire 2D',
+                xaxis: { range: [0, 10] },
+                yaxis: { range: [0, 10] }
+            };
+
+            Plotly.newPlot('plot', traces, layout);
+        }
+
+        function plot3D(model, result, variables) {
+            const [xVar, yVar, zVar] = variables;
+            const traces = [];
+            const colors = ['rgba(255, 0, 0, 0.5)', 'rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 255, 0, 0.5)', 'rgba(255, 0, 255, 0.5)'];
+
+            // Plot solution
+            const solution = {
+                x: [result[xVar] || 0],
+                y: [result[yVar] || 0],
+                z: [result[zVar] || 0],
+                mode: 'markers+text',
+                type: 'scatter3d',
+                name: 'Solution optimale',
+                text: [`Valeur optimale : ${result.result ? result.result.toFixed(4) : 'N/A'}`],
+                marker: { size: 6, color: 'red' },
+                textposition: 'top center'
+            };
+            traces.push(solution);
+
+            // Add constraints as surfaces
+            Object.entries(model.constraints).forEach(([name, constraint], index) => {
+                const expr = model.variables[xVar][name] + xVar + " + " + model.variables[yVar][name] + yVar + " + " + model.variables[zVar][name] + zVar;
+                let inequality = constraint.max !== undefined ? '<=' : (constraint.min !== undefined ? '>=' : '=');
+                let b = constraint.max !== undefined ? constraint.max : (constraint.min !== undefined ? constraint.min : constraint.equal);
+                let coeffs = { [xVar]: model.variables[xVar][name], [yVar]: model.variables[yVar][name], [zVar]: model.variables[zVar][name] };
+
+                let xRange = [0, parseFloat(b) / coeffs[xVar]];
+                let yRange = [0, parseFloat(b) / coeffs[yVar]];
+
+                if (inequality === '>=') {
+                    xRange = xRange.map(x => -x);
+                    yRange = yRange.map(y => -y);
+                }
+
+                let xValues = [];
+                let yValues = [];
+                let zValues = [];
+
+                for (let x = xRange[0]; x <= xRange[1]; x += 0.5) {
+                    for (let y = yRange[0]; y <= yRange[1]; y += 0.5) {
+                        let z = (parseFloat(b) - coeffs[xVar] * x - coeffs[yVar] * y) / coeffs[zVar];
+                        if (z >= 0) {
+                            xValues.push(x);
+                            yValues.push(y);
+                            zValues.push(z);
+                        }
+                    }
+                }
+
+                // Create a meshgrid for the surface plot
+                let xGrid = [];
+                let yGrid = [];
+                let zGrid = [];
+                let xStep = xRange[1] / 10;
+                let yStep = yRange[1] / 10;
+
+                for (let x = xRange[0]; x <= xRange[1]; x += xStep) {
+                    let xRow = [];
+                    let yRow = [];
+                    let zRow = [];
+                    for (let y = yRange[0]; y <= yRange[1]; y += yStep) {
+                        let z = (parseFloat(b) - coeffs[xVar] * x - coeffs[yVar] * y) / coeffs[zVar];
+                        if (z >= 0) {
+                            xRow.push(x);
+                            yRow.push(y);
+                            zRow.push(z);
+                        }
+                    }
+                    xGrid.push(xRow);
+                    yGrid.push(yRow);
+                    zGrid.push(zRow);
+                }
+
+                let constraintTrace = {
+                    x: xGrid,
+                    y: yGrid,
+                    z: zGrid,
+                    type: 'surface',
+                    name: `Contrainte ${index + 1}`,
+                    opacity: 0.5,
+                    colorscale: [[0, colors[index % colors.length]], [1, colors[index % colors.length]]],
+                    showscale: false
+                };
+
+                traces.push(constraintTrace);
+            });
+
+            const layout = {
+                title: 'Optimisation linéaire 3D',
+                scene: {
+                    xaxis: { title: xVar },
+                    yaxis: { title: yVar },
+                    zaxis: { title: zVar }
+                }
+            };
+
+            Plotly.newPlot('plot', traces, layout);
+        }
+    </script>
+</body>
+
+</html>

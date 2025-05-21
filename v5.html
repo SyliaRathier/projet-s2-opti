@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solveur de Programmation Linéaire (Simplex)</title>
+    <script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-6 rounded-lg">
+    <div class="container max-w-2xl mx-auto bg-white shadow-md p-8 rounded-lg">
+        <h1 class="text-2xl font-semibold text-blue-600 mb-6 text-center">Solveur de Programmation Linéaire</h1>
+   <!-- BOUTON FIXE EN HAUT À DROITE POUR AIDE -->
+<a href="simplexe-explication.html" target="_blank"
+   class="fixed top-4 right-4 bg-white border border-gray-300 hover:bg-blue-100 text-blue-700 font-medium px-3 py-2 rounded-full shadow-md transition-all duration-200 flex items-center gap-2 z-50">
+    📘 Aide Simplexe
+</a>
+
+
+
+        <div class="mb-4">
+            <label for="optimization-type" class="block text-gray-700 text-sm font-bold mb-2">Type
+                d'optimisation:</label>
+            <select id="optimization-type"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="max">Maximiser</option>
+                <option value="min">Minimiser</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="objective" class="block text-gray-700 text-sm font-bold mb-2">Fonction Objectif (Z):</label>
+            <input type="text" id="objective" placeholder="Ex: 3x + 4y"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+
+        <div id="constraints-container" class="mb-4 space-y-2">
+            <label class="block text-gray-700 text-sm font-bold mb-2">Contraintes:</label>
+            <div class="constraint flex items-center space-x-2">
+                <input type="text" placeholder="Ex: 2x + y"
+                    class="shadow appearance-none border rounded w-3/4 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline constraint-input">
+                <select
+                    class="shadow appearance-none border rounded w-1/4 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline operator-select">
+                    <option value="<=">&lt;=</option>
+                    <option value=">=">&gt;=</option>
+                    <option value="=">=</option>
+                </select>
+                <input type="text" placeholder="Ex: 10"
+                    class="shadow appearance-none border rounded w-1/4 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline constraint-value">
+                <button type="button"
+                    class="remove-constraint bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Supprimer</button>
+            </div>
+        </div>
+
+        <button id="add-constraint"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-4">Ajouter
+            Contrainte</button>
+
+        <div class="mb-4">
+            <label for="integer-variables" class="block text-gray-700 text-sm font-bold mb-2">Variables Entières
+                (séparées par des virgules, ex: x,y):</label>
+            <input type="text" id="integer-variables" placeholder="Ex: x,y"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+
+        <button id="solve"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Calculer</button>
+
+        <div id="results" class="mt-6 p-4 bg-gray-50 rounded-md border border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">Résultats:</h2>
+            <pre id="results-content" class="text-green-600 font-mono text-sm overflow-auto"></pre>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const objectiveInput = document.getElementById('objective');
+            const constraintsContainer = document.getElementById('constraints-container');
+            const addConstraintButton = document.getElementById('add-constraint');
+            const solveButton = document.getElementById('solve');
+            const resultsContainer = document.getElementById('results-content');
+            const integerVariablesInput = document.getElementById('integer-variables');
+            const optimizationTypeSelect = document.getElementById('optimization-type');
+
+            addConstraintButton.addEventListener('click', function () {
+                const constraintDiv = document.createElement('div');
+                constraintDiv.className = 'constraint flex items-center space-x-2 mb-2';
+                constraintDiv.innerHTML = `
+                    <input type="text" placeholder="Ex: 2x + y" class="shadow appearance-none border rounded w-3/4 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline constraint-input">
+                    <select class="shadow appearance-none border rounded w-1/4 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline operator-select">
+                        <option value="<=">&lt;=</option>
+                        <option value=">=">&gt;=</option>
+                        <option value="=">=</option>
+                    </select>
+                    <input type="text" placeholder="Ex: 10" class="shadow appearance-none border rounded w-1/4 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline constraint-value">
+                    <button type="button" class="remove-constraint bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Supprimer</button>
+                `;
+                constraintsContainer.appendChild(constraintDiv);
+
+                const removeButton = constraintDiv.querySelector('.remove-constraint');
+                removeButton.addEventListener('click', function () {
+                    constraintDiv.remove();
+                });
+            });
+
+            solveButton.addEventListener('click', function () {
+                try {
+                    const objectiveFunction = objectiveInput.value;
+                    if (!objectiveFunction) {
+                        throw new Error("Veuillez entrer une fonction objectif.");
+                    }
+
+                    const constraints = [];
+                    const constraintInputs = constraintsContainer.querySelectorAll('.constraint-input');
+                    const operatorSelects = constraintsContainer.querySelectorAll('.operator-select');
+                    const constraintValues = constraintsContainer.querySelectorAll('.constraint-value');
+
+                    for (let i = 0; i < constraintInputs.length; i++) {
+                        const constraintInput = constraintInputs[i].value;
+                        const operator = operatorSelects[i].value;
+                        const constraintValue = constraintValues[i].value;
+                        if (!constraintInput || !constraintValue) {
+                            throw new Error("Veuillez entrer toutes les valeurs des contraintes.");
+                        }
+                        constraints.push({
+                            expression: constraintInput,
+                            operator: operator,
+                            value: parseFloat(constraintValue)
+                        });
+                    }
+
+                    const integerVariables = integerVariablesInput.value
+                        .split(',')
+                        .map(s => s.trim())
+                        .filter(s => s !== '');
+
+                    const optimizationType = optimizationTypeSelect.value;
+
+                    const objectiveTerms = objectiveFunction.split('+').map(term => term.trim());
+                    const problem = {
+                        optimize: "",
+                        opType: optimizationType,
+                        constraints: {},
+                        variables: {},
+                        integers: {}
+                    };
+
+                    // Construction de la fonction objectif
+                    objectiveTerms.forEach(term => {
+                        const parts = term.match(/([+-]?\d*\.?\d*)?([a-zA-Z]+)/);
+                        if (parts) {
+                            const coeff = parseFloat(parts[1]) || 1;
+                            const varName = parts[2];
+                            problem.optimize = varName; // Dernière variable détectée utilisée comme critère principal
+                            if (!problem.variables[varName]) {
+                                problem.variables[varName] = {};
+                            }
+                            problem.variables[varName][varName] = coeff;
+                        }
+                    });
+
+                    // Construction des contraintes
+                    constraints.forEach((constraint, index) => {
+                        const constraintTerms = constraint.expression.split('+').map(term => term.trim());
+                        const constraintVars = {};
+
+                        constraintTerms.forEach(term => {
+                            const parts = term.match(/([+-]?\d*\.?\d*)?([a-zA-Z]+)/);
+                            if (parts) {
+                                const coeff = parseFloat(parts[1]) || 1;
+                                const varName = parts[2];
+                                constraintVars[varName] = coeff;
+                            }
+                        });
+
+                        for (const [varName, coeff] of Object.entries(constraintVars)) {
+                            if (!problem.variables[varName]) {
+                                problem.variables[varName] = {};
+                            }
+                            problem.variables[varName][varName] = coeff;
+                        }
+
+                        for (const [varName, coeff] of Object.entries(constraintVars)) {
+                            if (!problem.constraints[varName]) {
+                                problem.constraints[varName] = {};
+                            }
+
+                            if (constraint.operator === "<=") {
+                                problem.constraints[varName]["max"] = constraint.value / coeff;
+                            } else if (constraint.operator === ">=") {
+                                problem.constraints[varName]["min"] = constraint.value / coeff;
+                            } else if (constraint.operator === "=") {
+                                problem.constraints[varName]["equal"] = constraint.value / coeff;
+                            }
+                        }
+                    });
+
+                    // Variables entières
+                    integerVariables.forEach(varName => {
+                        problem.integers[varName] = 1;
+                    });
+
+                    const solution = solver.Solve(problem);
+
+                    if (solution.feasible) {
+                        let resultText = "Solution optimale: p = " + solution.result + "; ";
+                        for (const [key, value] of Object.entries(solution)) {
+                            if (!["feasible", "result", "bounded", "isIntegral"].includes(key)) {
+                                resultText += key + " = " + value + ", ";
+                            }
+                        }
+                        resultText = resultText.slice(0, -2); // Remove trailing comma and space
+                        resultsContainer.textContent = resultText;
+                    } else {
+                        resultsContainer.textContent = "Solution non réalisable.";
+                    }
+                } catch (error) {
+                    resultsContainer.textContent = "Erreur: " + error.message;
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

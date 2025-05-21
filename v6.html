@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solveur d'optimisation linéaire</title>
+    <script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <h1>Solveur d'optimisation linéaire</h1>
+    <div id="problem-setup">
+        <h2>Définir le problème</h2>
+        <textarea id="model-input" rows="10" cols="50" placeholder="Entrez votre modèle ici..."></textarea>
+        <button onclick="solveProblem()">Résoudre</button>
+    </div>
+    <div id="results">
+        <h2>Résultats</h2>
+        <pre id="output"></pre>
+    </div>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #problem-setup,
+        #results {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #output {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+    <script>
+        function solveProblem() {
+            const modelInput = document.getElementById('model-input').value;
+            try {
+                const model = JSON.parse(modelInput);
+                const results = solver.Solve(model);
+                document.getElementById('output').textContent = JSON.stringify(results, null, 2);
+            } catch (error) {
+                document.getElementById('output').textContent = "Erreur: " + error.message;
+            }
+        }
+
+    </script>
+</body>
+
+</html>
