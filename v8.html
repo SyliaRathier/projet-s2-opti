@@ -146,6 +146,7 @@
             });
 
             try {
+                console.log("Model:", model);
                 const result = solver.Solve(model);
                 document.getElementById('output').textContent = JSON.stringify(result, null, 2);
                 plotResults(model, result);
