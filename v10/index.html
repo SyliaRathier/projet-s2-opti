@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiSolve - Résolution de Problèmes d'Optimisation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f1f5f9;
+        }
+
+        input,
+        select {
+            transition: all 0.2s ease-in-out;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .ph {
+            vertical-align: middle;
+        }
+
+        .constraint-group input,
+        .constraint-group select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .pivot-row {
+            background-color: #d1fae5 !important;
+        }
+
+        .pivot-col {
+            background-color: #fef3c7 !important;
+        }
+
+        .pivot-cell {
+            background-color: #fbcfe8 !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 min-h-screen flex justify-center items-start py-10 px-4">
+    <div class="container bg-white rounded-2xl shadow-lg p-8 w-full max-w-4xl">
+        <h1 class="text-3xl font-bold text-center text-indigo-700 mb-4">OptiSolve</h1>
+        <p class="text-gray-600 text-center mb-6">Résolvez vos problèmes d'optimisation linéaire avec la méthode du
+            Simplex.</p>
+
+        <!-- Section 1 -->
+        <div id="input-section" class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
+            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">1. Entrez les données du problème
+            </div>
+            <div class="p-5 space-y-4">
+
+                <div>
+                    <label for="optimization-type" class="block text-gray-700 text-sm font-semibold mb-1">Type
+                        d'optimisation:</label>
+                    <select id="optimization-type"
+                        class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300">
+                        <option value="max">Maximisation</option>
+                        <option value="min">Minimisation</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-row space-x-4">
+                    <!-- Champ pour le nom de la fonction objectif -->
+                    <div class="flex-1">
+                        <label for="objective-name" class="block text-gray-700 text-sm font-semibold mb-1">Nom de la
+                            Fonction Objective:</label>
+                        <input type="text" id="objective-name" placeholder="Nom de la fonction"
+                            class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300">
+                    </div>
+
+                    <!-- Champ pour la fonction objectif -->
+                    <div class="flex-1">
+                        <label for="objective-function" class="block text-gray-700 text-sm font-semibold mb-1">Fonction
+                            Objective (e.g., 3x + 5y):</label>
+                        <input type="text" id="objective-function" placeholder="3x + 5y"
+                            class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300">
+                    </div>
+                </div>
+
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-semibold mb-2">Contraintes:</label>
+                    <div id="constraints-container">
+                        <div class="constraint-group flex flex-wrap gap-2 mb-2 items-center">
+                            <!-- Champ pour le nom de la contrainte -->
+                            <input type="text" placeholder="Nom de la contrainte"
+                                class="constraint-name flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
+
+                            <!-- Champ pour l'expression de la contrainte -->
+                            <input type="text" placeholder="2x + y"
+                                class="constraint-expression flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
+
+                            <!-- Champ de sélection pour l'opérateur -->
+                            <select
+                                class="constraint-operator w-min border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
+                                <option value="<=">≤</option>
+                                <option value=">=">≥</option>
+                                <option value="=">=</option>
+                            </select>
+
+                            <!-- Champ pour la valeur de la contrainte -->
+                            <input type="text" placeholder="10"
+                                class="constraint-value flex-grow border border-gray-300 rounded-lg py-2 px-3 w-1 text-gray-800">
+
+                            <!-- Bouton pour ajouter une contrainte -->
+                            <button type="button"
+                                class="add-constraint bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-3 py-2 transition">
+                                <i class="ph-bold ph-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="text-center pt-4">
+                    <button id="solve-button"
+                        class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
+                        <i class="ph-bold ph-rocket mr-2"></i>Résoudre le problème
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résultat -->
+        <div id="output-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
+            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">2. Solution</div>
+            <div class="p-5">
+                <div id="solution-text" class="text-lg text-gray-800 font-medium"></div>
+            </div>
+        </div>
+
+        <!-- Tableaux du Simplexe -->
+        <div id="tableaux-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
+            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">3. Tableaux du Simplexe</div>
+            <div class="p-5">
+                <div id="tableauxResults"></div>
+            </div>
+        </div>
+
+        <!-- Graphique -->
+        <div id="graph-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
+            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">4. Représentation Graphique</div>
+            <div class="p-5">
+                <div id="plot"></div>
+            </div>
+        </div>
+
+        <!-- Analyse de Sensibilité -->
+        <div id="sensitivity-section" class="hidden border border-gray-200 rounded-xl overflow-hidden">
+            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">5. Analyse de Sensibilité</div>
+            <div class="p-5">
+                <div id="sensitivity-text" class="text-md text-gray-700"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./simplexe2phases.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="./script.js"></script>
+</body>
+
+</html>

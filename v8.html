@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visualisation de l'optimisation linéaire</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input,
+        select,
+        textarea {
+            display: block;
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #output {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+
+        #plot {
+            width: 100%;
+            height: 500px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Solveur d'optimisation linéaire</h1>
+
+    <div id="problem-setup">
+        <h2>Définir le problème</h2>
+
+        <label for="opType">Type d'optimisation :</label>
+        <select id="opType">
+            <option value="max">Maximiser</option>
+            <option value="min">Minimiser</option>
+        </select>
+
+        <label for="objective">Fonction objectif (ex: 5x + 3y):</label>
+        <input id="objective" type="text" placeholder="Ex: 5x + 3y" value="4x + 3y + 2z" />
+
+        <label for="constraints">Contraintes (une par ligne, ex: 2x + y <= 10):</label>
+                <textarea id="constraints" rows="5" placeholder="Ex:&#10;2x + y <= 10&#10;x + y >= 5">2x + y + 2z <= 8
+3x + 2y + z <= 8</textarea>
+
+                <button onclick="solveProblem()">Résoudre</button>
+    </div>
+
+    <div id="results">
+        <h2>Résultats</h2>
+        <pre id="output"></pre>
+        <div id="plot"></div>
+    </div>
+
+    <script>
+        function parseExpression(expr) {
+            const terms = expr.match(/([+-]?\s*\d*\.?\d*\s*[a-zA-Z]+)/g);
+            const obj = {};
+            if (!terms) return obj;
+
+            terms.forEach(term => {
+                term = term.replace(/\s+/g, '');
+                const match = term.match(/^([+-]?\d*\.?\d*)([a-zA-Z]+)$/);
+                if (!match) return;
+
+                let [, coeff, variable] = match;
+
+                if (coeff === "" || coeff === "+") coeff = 1;
+                else if (coeff === "-") coeff = -1;
+                else coeff = parseFloat(coeff);
+
+                obj[variable] = coeff;
+            });
+            return obj;
+        }
+
+        function solveProblem() {
+            const opType = document.getElementById('opType').value;
+            const objectiveExpr = document.getElementById('objective').value;
+            const constraintsText = document.getElementById('constraints').value.trim();
+
+            const model = {
+                optimize: "profit",
+                opType: opType,
+                constraints: {},
+                variables: {},
+            };
+
+            const objParsed = parseExpression(objectiveExpr);
+
+            for (let variable in objParsed) {
+                if (!model.variables[variable]) model.variables[variable] = {};
+                model.variables[variable]["profit"] = objParsed[variable];
+            }
+
+            const lines = constraintsText.split('\n');
+            lines.forEach((line, index) => {
+                const match = line.match(/(.+?)(<=|>=|=)(.+)/);
+                if (!match) return;
+
+                const [_, lhs, operator, rhs] = match.map(e => e.trim());
+                const lhsParsed = parseExpression(lhs);
+                const rhsValue = parseFloat(rhs);
+                const constraintName = `constraint${index + 1}`;
+
+                model.constraints[constraintName] = {};
+                if (operator === "<=") model.constraints[constraintName].max = rhsValue;
+                else if (operator === ">=") model.constraints[constraintName].min = rhsValue;
+                else if (operator === "=") model.constraints[constraintName].equal = rhsValue;
+
+                for (let variable in lhsParsed) {
+                    if (!model.variables[variable]) model.variables[variable] = {};
+                    model.variables[variable][constraintName] = lhsParsed[variable];
+                }
+            });
+
+            try {
+                console.log("Model:", model);
+                const result = solver.Solve(model);
+                document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+                plotResults(model, result);
+            } catch (error) {
+                document.getElementById('output').textContent = "Erreur: " + error.message;
+            }
+        }
+
+        function plotResults(model, result) {
+            const variables = Object.keys(model.variables);
+            const numVariables = variables.length;
+
+            if (numVariables === 2) {
+                plot2D(model, result, variables);
+            } else if (numVariables === 3) {
+                plot3D(model, result, variables);
+            } else {
+                console.error("Unsupported number of variables for plotting.");
+            }
+        }
+
+        function plot2D(model, result, variables) {
+            const [xVar, yVar] = variables;
+            const traces = [];
+            const colors = ['rgba(255, 0, 0, 0.5)', 'rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 255, 0, 0.5)', 'rgba(255, 0, 255, 0.5)'];
+
+            // Plot constraints
+            Object.entries(model.constraints).forEach(([name, constraint], index) => {
+                const expr = model.variables[xVar][name] + xVar + " + " + model.variables[yVar][name] + yVar;
+                let yValues = [];
+                let xValues = Array.from({ length: 100 }, (_, i) => i / 10);
+
+                if (constraint.max !== undefined) {
+                    yValues = xValues.map(x => (constraint.max - model.variables[xVar][name] * x) / model.variables[yVar][name]);
+                    traces.push({
+                        x: xValues,
+                        y: yValues,
+                        mode: 'lines',
+                        name: `${expr} <= ${constraint.max}`,
+                        line: { color: colors[index % colors.length], dash: 'dash' }
+                    });
+                } else if (constraint.min !== undefined) {
+                    yValues = xValues.map(x => (constraint.min - model.variables[xVar][name] * x) / model.variables[yVar][name]);
+                    traces.push({
+                        x: xValues,
+                        y: yValues,
+                        mode: 'lines',
+                        name: `${expr} >= ${constraint.min}`,
+                        line: { color: colors[index % colors.length], dash: 'dash' }
+                    });
+                } else if (constraint.equal !== undefined) {
+                    yValues = xValues.map(x => (constraint.equal - model.variables[xVar][name] * x) / model.variables[yVar][name]);
+                    traces.push({
+                        x: xValues,
+                        y: yValues,
+                        mode: 'lines',
+                        name: `${expr} = ${constraint.equal}`,
+                        line: { color: colors[index % colors.length] }
+                    });
+                }
+            });
+
+            // Plot solution
+            const solution = {
+                x: [result[xVar] || 0],
+                y: [result[yVar] || 0],
+                mode: 'markers',
+                name: 'Solution',
+                marker: { size: 12, color: 'red' }
+            };
+            traces.push(solution);
+
+            const layout = {
+                title: 'Optimisation linéaire 2D',
+                xaxis: { range: [0, 10] },
+                yaxis: { range: [0, 10] }
+            };
+
+            Plotly.newPlot('plot', traces, layout);
+        }
+
+        function plot3D(model, result, variables) {
+            const [xVar, yVar, zVar] = variables;
+            const traces = [];
+            const colors = ['rgba(255, 0, 0, 0.5)', 'rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 255, 0, 0.5)', 'rgba(255, 0, 255, 0.5)'];
+
+            // Plot solution
+            const solution = {
+                x: [result[xVar] || 0],
+                y: [result[yVar] || 0],
+                z: [result[zVar] || 0],
+                mode: 'markers+text',
+                type: 'scatter3d',
+                name: 'Solution optimale',
+                text: [`Valeur optimale : ${result.result ? result.result.toFixed(4) : 'N/A'}`],
+                marker: { size: 6, color: 'red' },
+                textposition: 'top center'
+            };
+            traces.push(solution);
+
+            // Add constraints as surfaces
+            Object.entries(model.constraints).forEach(([name, constraint], index) => {
+                const expr = model.variables[xVar][name] + xVar + " + " + model.variables[yVar][name] + yVar + " + " + model.variables[zVar][name] + zVar;
+                let inequality = constraint.max !== undefined ? '<=' : (constraint.min !== undefined ? '>=' : '=');
+                let b = constraint.max !== undefined ? constraint.max : (constraint.min !== undefined ? constraint.min : constraint.equal);
+                let coeffs = { [xVar]: model.variables[xVar][name], [yVar]: model.variables[yVar][name], [zVar]: model.variables[zVar][name] };
+
+                let xRange = [0, parseFloat(b) / coeffs[xVar]];
+                let yRange = [0, parseFloat(b) / coeffs[yVar]];
+
+                if (inequality === '>=') {
+                    xRange = xRange.map(x => -x);
+                    yRange = yRange.map(y => -y);
+                }
+
+                let xValues = [];
+                let yValues = [];
+                let zValues = [];
+
+                for (let x = xRange[0]; x <= xRange[1]; x += 0.5) {
+                    for (let y = yRange[0]; y <= yRange[1]; y += 0.5) {
+                        let z = (parseFloat(b) - coeffs[xVar] * x - coeffs[yVar] * y) / coeffs[zVar];
+                        if (z >= 0) {
+                            xValues.push(x);
+                            yValues.push(y);
+                            zValues.push(z);
+                        }
+                    }
+                }
+
+                // Create a meshgrid for the surface plot
+                let xGrid = [];
+                let yGrid = [];
+                let zGrid = [];
+                let xStep = xRange[1] / 10;
+                let yStep = yRange[1] / 10;
+
+                for (let x = xRange[0]; x <= xRange[1]; x += xStep) {
+                    let xRow = [];
+                    let yRow = [];
+                    let zRow = [];
+                    for (let y = yRange[0]; y <= yRange[1]; y += yStep) {
+                        let z = (parseFloat(b) - coeffs[xVar] * x - coeffs[yVar] * y) / coeffs[zVar];
+                        if (z >= 0) {
+                            xRow.push(x);
+                            yRow.push(y);
+                            zRow.push(z);
+                        }
+                    }
+                    xGrid.push(xRow);
+                    yGrid.push(yRow);
+                    zGrid.push(zRow);
+                }
+
+                let constraintTrace = {
+                    x: xGrid,
+                    y: yGrid,
+                    z: zGrid,
+                    type: 'surface',
+                    name: `Contrainte ${index + 1}`,
+                    opacity: 0.5,
+                    colorscale: [[0, colors[index % colors.length]], [1, colors[index % colors.length]]],
+                    showscale: false
+                };
+
+                traces.push(constraintTrace);
+            });
+
+            const layout = {
+                title: 'Optimisation linéaire 3D',
+                scene: {
+                    xaxis: { title: xVar },
+                    yaxis: { title: yVar },
+                    zaxis: { title: zVar }
+                }
+            };
+
+            Plotly.newPlot('plot', traces, layout);
+        }
+    </script>
+</body>
+
+</html>
