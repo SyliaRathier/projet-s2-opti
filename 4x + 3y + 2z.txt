@@ -1,0 +1,96 @@
+Fonction à maximiser
+4x + 3y + 2z
+Contraintes
+2x + y + 2z <= 8
+3x + 2y + 1z <= 8
+
+Fonction à minimiser
+3x + 2y
+Contraintes
+x + y >= 4
+2x + y >= 5
+
+minimize z = 900x + 1400y + 700z + 1000w + 1700v + 900s subject to
+x + y + z <= 10
+w + v + s <= 10
+x + w >= 6
+y + v >= 4
+z + s >= 4
+w - s <= 0
+Optimal solution: z = 14400; s = 2, v = 0, w = 2, x = 4, y = 4, z = 2
+
+
+minimize : 2x + 3y + z + w
+x + y + z + w <= 40
+2x + y - z - w >= 10
+w - y >= 12
+Optimal solution: z = 34; w = 12, x = 11, y = 0, z = 0
+
+
+
+{
+  "optimize": "4x + 3y + 2z",
+  "opType": "max",
+  "constraints": {
+    "constraint1": { "max": 8 },
+    "constraint2": { "max": 8 }
+  },
+  "variables": {
+    "x": { "profit": 4, "constraint1": 2, "constraint2": 3 },
+    "y": { "profit": 3, "constraint1": 1, "constraint2": 2 },
+    "z": { "profit": 2, "constraint1": 2, "constraint2": 1 }
+  }
+}
+
+
+{
+  "optimize": "3x + 2y",
+  "opType": "min",
+  "constraints": {
+    "constraint1": { "min": 4 },
+    "constraint2": { "min": 5 }
+  },
+  "variables": {
+    "x": { "profit": 3, "constraint1": 1, "constraint2": 2 },
+    "y": { "profit": 2, "constraint1": 1, "constraint2": 1 }
+  }
+}
+
+
+{
+  "optimize": "900x + 1400y + 700z + 1000w + 1700v + 900s",
+  "opType": "min",
+  "constraints": {
+    "constraint1": { "max": 10 },
+    "constraint2": { "max": 10 },
+    "constraint3": { "min": 6 },
+    "constraint4": { "min": 4 },
+    "constraint5": { "min": 4 },
+    "constraint6": { "max": 0 }
+  },
+  "variables": {
+    "x": { "profit": 900, "constraint1": 1, "constraint3": 1 },
+    "y": { "profit": 1400, "constraint1": 1, "constraint4": 1 },
+    "z": { "profit": 700, "constraint1": 1, "constraint5": 1 },
+    "w": { "profit": 1000, "constraint2": 1, "constraint3": 1, "constraint6": 1 },
+    "v": { "profit": 1700, "constraint2": 1, "constraint4": 1 },
+    "s": { "profit": 900, "constraint2": 1, "constraint5": 1, "constraint6": -1 }
+  }
+}
+
+
+{
+  "optimize": "2x + 3y + z + w",
+  "opType": "min",
+  "constraints": {
+    "constraint1": { "max": 40 },
+    "constraint2": { "min": 10 },
+    "constraint3": { "min": 12 }
+  },
+  "variables": {
+    "x": { "profit": 2, "constraint1": 1, "constraint2": 2 },
+    "y": { "profit": 3, "constraint1": 1, "constraint2": 1, "constraint3": -1 },
+    "z": { "profit": 1, "constraint1": 1, "constraint2": -1 },
+    "w": { "profit": 1, "constraint1": 1, "constraint2": -1, "constraint3": 1 }
+  }
+}

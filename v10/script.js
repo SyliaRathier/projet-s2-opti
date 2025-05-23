@@ -149,7 +149,6 @@ function displaySolution(result) {
     solutionTextString += "</div>";
     solutionText.innerHTML = solutionTextString;
 }
-
 function displayTableaux(tableaux) {
     const tableauxResultsDiv = document.getElementById('tableauxResults');
     tableauxResultsDiv.innerHTML = '';
@@ -168,11 +167,36 @@ function displayTableaux(tableaux) {
         headerRow.innerHTML = `<th>Basis</th>` + tab.headers.map(header => `<th>${header}</th>`).join('');
         thead.appendChild(headerRow);
 
+        // Trouver colonne pivot (plus négatif dans ligne obj)
+        const objRow = tab.rows[tab.rows.length - 1];
+        const pivotCol = objRow.slice(0, -1).reduce((minIdx, val, idx, arr) => val < arr[minIdx] ? idx : minIdx, 0);
+        const isUnbounded = objRow[pivotCol] >= 0;
+        let pivotRow = -1;
+
+        if (!isUnbounded) {
+            const ratios = tab.rows.slice(0, -1).map((row, i) => {
+                const rhs = row[row.length - 1];
+                const val = row[pivotCol];
+                return val > 0 ? rhs / val : Infinity;
+            });
+            const minRatio = Math.min(...ratios);
+            pivotRow = ratios.indexOf(minRatio);
+        }
+
         // Rows
         tab.rows.forEach((row, rIdx) => {
             const tr = document.createElement('tr');
-            const label = rIdx < tab.basis.length ? tab.basis[rIdx] : "Z"; // 'Z' for the objective row
-            tr.innerHTML = `<td>${label}</td>` + row.map(n => `<td>${(Math.round(n * 1000) / 1000).toFixed(3)}</td>`).join('');
+            const label = rIdx < tab.basis.length ? "*" + tab.basis[rIdx] : "Z";
+
+            tr.innerHTML = `<td>${label}</td>` + row.map((val, cIdx) => {
+                let cellClass = '';
+                if (rIdx === pivotRow && cIdx === pivotCol) cellClass = 'pivot-cell';
+                else if (rIdx === pivotRow) cellClass = 'pivot-row';
+                else if (cIdx === pivotCol) cellClass = 'pivot-col';
+
+                return `<td class="${cellClass}">${(Math.round(val * 1000) / 1000).toFixed(3)}</td>`;
+            }).join('');
+
             tbody.appendChild(tr);
         });
 
@@ -291,10 +315,15 @@ function plot3D(problem, result, plotDiv) {
     const data = [];
     const layout = {
         title: 'Feasible Region and Objective Function (3D)',
+        showlegend: true,
         scene: {
             xaxis: { title: Object.keys(problem.variables)[0] },
             yaxis: { title: Object.keys(problem.variables)[1] },
             zaxis: { title: Object.keys(problem.variables)[2] }
+        },
+        legend: {
+            x: 1,
+            y: 1
         }
     };
 
@@ -321,7 +350,6 @@ function plot3D(problem, result, plotDiv) {
     maxY = Math.max(maxY, result.variables[yVar] || 0) * 1.5 + 5;
     maxZ = Math.max(maxZ, result.variables[zVar] || 0) * 1.5 + 5;
 
-    // Generate meshgrid for surfaces
     const numPoints = 20;
     const x_range = Array.from({ length: numPoints }, (_, i) => i * (maxX / (numPoints - 1)));
     const y_range = Array.from({ length: numPoints }, (_, i) => i * (maxY / (numPoints - 1)));
@@ -346,33 +374,54 @@ function plot3D(problem, result, plotDiv) {
                 if (zCoeff !== 0) {
                     z_val = (rhs - xCoeff * x_range[i] - yCoeff * y_range[j]) / zCoeff;
                 } else if (yCoeff !== 0) {
-                    z_val = (rhs - xCoeff * x_range[i]) / yCoeff; // This becomes constant for z
+                    z_val = (rhs - xCoeff * x_range[i]) / yCoeff;
                 } else if (xCoeff !== 0) {
-                    z_val = rhs / xCoeff; // This becomes constant for z
+                    z_val = rhs / xCoeff;
                 } else {
-                    z_val = 0; // Fallback
+                    z_val = 0;
                 }
                 row.push(z_val);
             }
             z_vals.push(row);
         }
 
+        const color = colors[colorIndex % colors.length];
+        const constraintName = `${conKey} (${conType} ${rhs})`;
+
+        // Trace surface
         data.push({
             x: x_range,
             y: y_range,
             z: z_vals,
             type: 'surface',
-            name: `${conKey} (${conType} ${rhs})`,
+            showscale: false,
+            name: constraintName,
             opacity: 0.5,
-            colorscale: [[0, colors[colorIndex % colors.length]], [1, colors[colorIndex % colors.length]]]
+            hoverinfo: 'name',
+            colorscale: [[0, color], [1, color]],
+            legendgroup: constraintName,
+            showlegend: false
         });
+
+        // Fake trace for legend
+        data.push({
+            type: 'scatter3d',
+            mode: 'lines',
+            x: [null], y: [null], z: [null],
+            name: constraintName,
+            legendgroup: constraintName,
+            line: { color: color },
+            showlegend: true
+        });
+
         colorIndex++;
     }
 
-    // Plot the optimal solution point
+    // Optimal solution point
     const optimalX = result.variables[xVar] || 0;
     const optimalY = result.variables[yVar] || 0;
     const optimalZ = result.variables[zVar] || 0;
+
     data.push({
         x: [optimalX],
         y: [optimalY],
@@ -380,11 +429,14 @@ function plot3D(problem, result, plotDiv) {
         mode: 'markers',
         type: 'scatter3d',
         name: `Optimal Solution (p=${result.p})`,
-        marker: { size: 8, color: 'red', symbol: 'circle' }
+        marker: { size: 8, color: 'red', symbol: 'circle' },
+        showlegend: true
     });
 
     Plotly.newPlot(plotDiv, data, layout);
 }
+
+
 
 function displaySensitivityAnalysis(result, constraints) {
     let sensitivityTextString = "Analyse de Sensibilité:\n";

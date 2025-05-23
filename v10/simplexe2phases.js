@@ -222,13 +222,13 @@ const problemeMax1 = {
     optimize: 'objectif',
     opType: 'max',
     constraints: {
-        c1: { max: 8 },
-        c2: { max: 8 }
+        hello: { max: 8 },
+        hola: { max: 8 }
     },
     variables: {
-        x: { objectif: 4, c1: 2, c2: 3 },
-        y: { objectif: 3, c1: 1, c2: 2 },
-        z: { objectif: 2, c1: 2, c2: 1 }
+        x: { objectif: 4, hello: 2, hola: 3 },
+        y: { objectif: 3, hello: 1, hola: 2 },
+        z: { objectif: 2, hello: 2, hola: 1 }
     }
 };
 
@@ -262,19 +262,20 @@ const problemeMinTest = {
 };
 
 // PASSER EN PARAMETRE LE PROBLEME LinearProgrammingSolver(nom du probleme)
-const solver = new LinearProgrammingSolver(problemeMinTest);
+console.log(problemeMax1)
+const solver = new LinearProgrammingSolver(problemeMax1);
 const result = solver.solve();
-console.log(result.tableaux)
+//console.log(result.tableaux)
 
-// let resOptiVal = result.p < 0 ? (result.p * -1) : result.p
-// console.log("Optimal solution: p =", resOptiVal);
-// console.log("Variable values:", result.variables);
-// result.tableaux.forEach((tab, i) => {
-//     console.log(`\nTableau ${i + 1}:`);
-//     console.log(tab.headers.join("\t"));
-//     tab.rows.forEach((row, r) => {
-//         const label = r < tab.basis.length ? "*" + tab.basis[r] : "-p";
-//         console.log(label + "\t" + row.map(n => Math.round(n * 1000) / 1000).join("\t"));
-//     });
-// });
+let resOptiVal = result.p < 0 ? (result.p * -1) : result.p
+console.log("Optimal solution: p =", resOptiVal);
+console.log("Variable values:", result.variables);
+result.tableaux.forEach((tab, i) => {
+    console.log(`\nTableau ${i + 1}:`);
+    console.log(tab.headers.join("\t"));
+    tab.rows.forEach((row, r) => {
+        const label = r < tab.basis.length ? "*" + tab.basis[r] : "-p";
+        console.log(label + "\t" + row.map(n => Math.round(n * 1000) / 1000).join("\t"));
+    });
+});
 
