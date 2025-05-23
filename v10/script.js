@@ -18,10 +18,12 @@ solveButton.addEventListener('click', () => {
         const constraints = [];
         const constraintGroups = constraintsContainer.querySelectorAll('.constraint-group');
         constraintGroups.forEach(group => {
+            const nameInput = group.querySelector('.constraint-name');
             const expressionInput = group.querySelector('.constraint-expression');
             const operatorSelect = group.querySelector('.constraint-operator');
             const valueInput = group.querySelector('.constraint-value');
             constraints.push({
+                name: nameInput.value,
                 expression: expressionInput.value,
                 operator: operatorSelect.value,
                 value: parseFloat(valueInput.value)
@@ -37,8 +39,10 @@ solveButton.addEventListener('click', () => {
             throw new Error("Veuillez entrer au moins une contrainte.");
         }
 
+        console.log(problem)
         const solver = new LinearProgrammingSolver(problem);
         const result = solver.solve();
+        console.log(result)
 
         displaySolution(result);
         displayTableaux(result.tableaux);
@@ -55,21 +59,26 @@ solveButton.addEventListener('click', () => {
     }
 });
 
+
 function addConstraintGroup() {
     const constraintGroup = document.createElement('div');
     constraintGroup.className = 'constraint-group flex flex-wrap gap-2 mb-2';
     constraintGroup.innerHTML = `
-                <input type="text" placeholder="2x + y" class="constraint-expression flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
-                <select class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
-                    <option value="<=">≤</option>
-                    <option value=">=">≥</option>
-                    <option value="=">=</option>
-                </select>
-                <input type="text" placeholder="10" class="constraint-value flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
-                <button class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition" type="button">
-                    <i class="ph-bold ph-trash"></i>
-                </button>
-            `;
+        <input type="text" placeholder="Nom de la contrainte"
+            class="constraint-name flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
+        <input type="text" placeholder="2x + y"
+            class="constraint-expression flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
+        <select class="constraint-operator w-min border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
+            <option value="<=">≤</option>
+            <option value=">=">≥</option>
+            <option value="=">=</option>
+        </select>
+        <input type="text" placeholder="10"
+            class="constraint-value flex-grow border border-gray-300 rounded-lg py-2 px-3 w-1 text-gray-800">
+        <button class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition" type="button">
+            <i class="ph-bold ph-trash"></i>
+        </button>
+    `;
     constraintsContainer.appendChild(constraintGroup);
 
     const removeButton = constraintGroup.querySelector('.remove-constraint');
@@ -78,6 +87,7 @@ function addConstraintGroup() {
     });
 }
 
+
 constraintsContainer.addEventListener('click', (event) => {
     if (event.target.classList.contains('add-constraint')) {
         addConstraintGroup();
@@ -85,8 +95,9 @@ constraintsContainer.addEventListener('click', (event) => {
 });
 
 function parseProblem(objectiveFunction, constraints, optimizationType) {
+    const objectiveName = document.getElementById('objective-name').value || 'objectif';
     const problem = {
-        optimize: 'objectif',
+        optimize: objectiveName,
         opType: optimizationType,
         constraints: {},
         variables: {}
@@ -99,13 +110,13 @@ function parseProblem(objectiveFunction, constraints, optimizationType) {
         if (match) {
             const coeff = match[1] === '-' ? -1 : match[1] === '+' ? 1 : parseFloat(match[1] || 1);
             const varName = match[2];
-            problem.variables[varName] = { objectif: coeff };
+            problem.variables[varName] = { [objectiveName]: coeff };
         }
     });
 
     // Analyser les contraintes
     constraints.forEach((constraint, index) => {
-        const constraintName = `c${index + 1}`;
+        const constraintName = constraint.name || `c${index + 1}`;
         const parts = constraint.expression.split(/([+-]?\d*[a-zA-Z]+)/).filter(Boolean);
         const constraintObj = {};
 
@@ -135,6 +146,7 @@ function parseProblem(objectiveFunction, constraints, optimizationType) {
 
     return problem;
 }
+
 
 function displaySolution(result) {
     let solutionTextString = "<div class='solution-container'>";
