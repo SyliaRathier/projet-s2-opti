@@ -631,6 +631,8 @@ function loadProblem(index) {
 document.addEventListener('DOMContentLoaded', () => {
     displaySavedProblems();
 });
+
+
 document.getElementById('save-button').addEventListener('click', function() {
     // Affiche les sections de solution
     document.getElementById('output-section').classList.remove('hidden');
