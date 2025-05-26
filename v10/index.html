@@ -53,12 +53,6 @@
             vertical-align: middle;
         }
 
-        .constraint-group input,
-        .constraint-group select {
-            flex: 1;
-            min-width: 150px;
-        }
-
         .pivot-row {
             background-color: #d1fae5 !important;
         }
@@ -115,7 +109,6 @@
                     </div>
                 </div>
 
-
                 <div>
                     <label class="block text-gray-700 text-sm font-semibold mb-2">Contraintes:</label>
                     <div id="constraints-container">
@@ -164,8 +157,15 @@
             <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">2. Solution</div>
             <div class="p-5">
                 <div id="solution-text" class="text-lg text-gray-800 font-medium"></div>
+                <div class="text-center pt-4">
+                    <button id="save-button"
+                        class="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
+                        <i class="ph-bold ph-floppy-disk mr-2"></i>Sauvegarder le problème
+                    </button>
+                </div>
             </div>
         </div>
+
 
         <!-- Tableaux du Simplexe -->
         <div id="tableaux-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
@@ -191,6 +191,15 @@
             </div>
         </div>
     </div>
+
+    <!-- Liste des problèmes sauvegardés -->
+    <div id="saved-problems-section" class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
+        <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">6. Problèmes Sauvegardés</div>
+        <div class="p-5">
+            <div id="saved-problems-list" class="space-y-2"></div>
+        </div>
+    </div>
+
 
     <!-- Scripts -->
     <script src="./simplexe2phases.js"></script>

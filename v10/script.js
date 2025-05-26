@@ -10,6 +10,8 @@ const sensitivityText = document.getElementById('sensitivity-text');
 const tableauxSection = document.getElementById('tableaux-section');
 
 let chartInstance = null;
+let currentResult = null;
+
 
 solveButton.addEventListener('click', () => {
     try {
@@ -18,10 +20,12 @@ solveButton.addEventListener('click', () => {
         const constraints = [];
         const constraintGroups = constraintsContainer.querySelectorAll('.constraint-group');
         constraintGroups.forEach(group => {
+            const nameInput = group.querySelector('.constraint-name');
             const expressionInput = group.querySelector('.constraint-expression');
             const operatorSelect = group.querySelector('.constraint-operator');
             const valueInput = group.querySelector('.constraint-value');
             constraints.push({
+                name: nameInput.value,
                 expression: expressionInput.value,
                 operator: operatorSelect.value,
                 value: parseFloat(valueInput.value)
@@ -37,10 +41,15 @@ solveButton.addEventListener('click', () => {
             throw new Error("Veuillez entrer au moins une contrainte.");
         }
 
+        console.log(problem)
         const solver = new LinearProgrammingSolver(problem);
         const result = solver.solve();
+        console.log(result)
 
-        displaySolution(result);
+        // Stocker le résultat dans la variable globale
+        currentResult = result;
+
+        displaySolution(result, problem);
         displayTableaux(result.tableaux);
         plotSolution(problem, result);
         displaySensitivityAnalysis(result, constraints);
@@ -55,21 +64,27 @@ solveButton.addEventListener('click', () => {
     }
 });
 
+
+
 function addConstraintGroup() {
     const constraintGroup = document.createElement('div');
     constraintGroup.className = 'constraint-group flex flex-wrap gap-2 mb-2';
     constraintGroup.innerHTML = `
-                <input type="text" placeholder="2x + y" class="constraint-expression flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
-                <select class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
-                    <option value="<=">≤</option>
-                    <option value=">=">≥</option>
-                    <option value="=">=</option>
-                </select>
-                <input type="text" placeholder="10" class="constraint-value flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
-                <button class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition" type="button">
-                    <i class="ph-bold ph-trash"></i>
-                </button>
-            `;
+        <input type="text" placeholder="Nom de la contrainte"
+            class="constraint-name flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
+        <input type="text" placeholder="2x + y"
+            class="constraint-expression flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
+        <select class="constraint-operator w-min border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
+            <option value="<=">≤</option>
+            <option value=">=">≥</option>
+            <option value="=">=</option>
+        </select>
+        <input type="text" placeholder="10"
+            class="constraint-value flex-grow border border-gray-300 rounded-lg py-2 px-3 w-1 text-gray-800">
+        <button class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition" type="button">
+            <i class="ph-bold ph-trash"></i>
+        </button>
+    `;
     constraintsContainer.appendChild(constraintGroup);
 
     const removeButton = constraintGroup.querySelector('.remove-constraint');
@@ -78,6 +93,7 @@ function addConstraintGroup() {
     });
 }
 
+
 constraintsContainer.addEventListener('click', (event) => {
     if (event.target.classList.contains('add-constraint')) {
         addConstraintGroup();
@@ -85,8 +101,9 @@ constraintsContainer.addEventListener('click', (event) => {
 });
 
 function parseProblem(objectiveFunction, constraints, optimizationType) {
+    const objectiveName = document.getElementById('objective-name').value || 'objectif';
     const problem = {
-        optimize: 'objectif',
+        optimize: objectiveName,
         opType: optimizationType,
         constraints: {},
         variables: {}
@@ -99,13 +116,13 @@ function parseProblem(objectiveFunction, constraints, optimizationType) {
         if (match) {
             const coeff = match[1] === '-' ? -1 : match[1] === '+' ? 1 : parseFloat(match[1] || 1);
             const varName = match[2];
-            problem.variables[varName] = { objectif: coeff };
+            problem.variables[varName] = { [objectiveName]: coeff };
         }
     });
 
     // Analyser les contraintes
     constraints.forEach((constraint, index) => {
-        const constraintName = `c${index + 1}`;
+        const constraintName = constraint.name || `c${index + 1}`;
         const parts = constraint.expression.split(/([+-]?\d*[a-zA-Z]+)/).filter(Boolean);
         const constraintObj = {};
 
@@ -136,19 +153,38 @@ function parseProblem(objectiveFunction, constraints, optimizationType) {
     return problem;
 }
 
-function displaySolution(result) {
+
+// function displaySolution(result, problem) {
+//     let solutionTextString = "<div class='solution-container'>";
+//     solutionTextString += "<h3 class='text-xl font-semibold text-indigo-700 mb-2'>Solution Optimale</h3>";
+//     solutionTextString += `<p class='mb-2'>La solution optimale de la fonction objective ${problem.optimize} est atteinte pour :</p>`;
+//     solutionTextString += "<ul class='list-disc list-inside mb-4'>";
+//     for (const [variable, value] of Object.entries(result.variables)) {
+//         solutionTextString += `<li>${variable} = ${value}</li>`;
+//     }
+//     solutionTextString += "</ul>";
+//     solutionTextString += `<p class='font-bold'>Valeur de la fonction objective ${problem.optimize} : ${result.p.toFixed(2)}</p>`;
+//     solutionTextString += "</div>";
+//     solutionText.innerHTML = solutionTextString;
+// }
+
+
+function displaySolution(result, problem) {
     let solutionTextString = "<div class='solution-container'>";
     solutionTextString += "<h3 class='text-xl font-semibold text-indigo-700 mb-2'>Solution Optimale</h3>";
-    solutionTextString += "<p class='mb-2'>La solution optimale est atteinte pour :</p>";
+    solutionTextString += `<p class='mb-2'>La solution optimale de la fonction objective ${problem.optimize} est atteinte pour :</p>`;
     solutionTextString += "<ul class='list-disc list-inside mb-4'>";
     for (const [variable, value] of Object.entries(result.variables)) {
         solutionTextString += `<li>${variable} = ${value}</li>`;
     }
     solutionTextString += "</ul>";
-    solutionTextString += `<p class='font-bold'>Valeur de la fonction objective : ${result.p.toFixed(2)}</p>`;
+    solutionTextString += `<p class='font-bold'>Valeur de la fonction objective ${problem.optimize} : ${result.p.toFixed(2)}</p>`;
     solutionTextString += "</div>";
     solutionText.innerHTML = solutionTextString;
 }
+
+
+
 function displayTableaux(tableaux) {
     const tableauxResultsDiv = document.getElementById('tableauxResults');
     tableauxResultsDiv.innerHTML = '';
@@ -223,25 +259,14 @@ function plotSolution(problem, result) {
 
 function plot2D(problem, result, plotDiv) {
     const data = [];
-    const layout = {
-        title: 'Feasible Region and Objective Function (2D)',
-        xaxis: { title: Object.keys(problem.variables)[0] },
-        yaxis: { title: Object.keys(problem.variables)[1] },
-        hovermode: 'closest',
-        showlegend: true
-    };
 
     const xVar = Object.keys(problem.variables)[0];
     const yVar = Object.keys(problem.variables)[1];
 
-    const x_values = [];
-    const y_values = [];
-
-    // Plot constraints
     const constraints = problem.constraints;
     const variables = problem.variables;
 
-    // Determine plot range
+    // Déterminer maxX et maxY pour la zone de tracé
     let maxX = 0;
     let maxY = 0;
     for (const conKey in constraints) {
@@ -253,36 +278,56 @@ function plot2D(problem, result, plotDiv) {
         if (xCoeff !== 0) maxX = Math.max(maxX, rhs / xCoeff);
         if (yCoeff !== 0) maxY = Math.max(maxY, rhs / yCoeff);
     }
+
     maxX = Math.max(maxX, result.variables[xVar] || 0) * 1.5 + 5;
     maxY = Math.max(maxY, result.variables[yVar] || 0) * 1.5 + 5;
 
-    // Add non-negativity constraints for plotting convenience
+    // Définir le layout maintenant que maxX et maxY sont disponibles
+    const layout = {
+        title: 'Feasible Region and Objective Function (2D)',
+        xaxis: {
+            title: xVar,
+            range: [0, maxX],
+            zeroline: true
+        },
+        yaxis: {
+            title: yVar,
+            range: [0, maxY],
+            zeroline: true
+        },
+        hovermode: 'closest',
+        showlegend: true
+    };
+
+    // Contraintes de non-négativité
     data.push({
-        x: [0, maxX], y: [0, 0], mode: 'lines', name: `${xVar} >= 0`, line: { dash: 'dot', color: 'gray' }
+        x: [0, maxX], y: [0, 0], mode: 'lines', name: `${xVar} ≥ 0`, line: { dash: 'dot', color: 'gray' }
     });
     data.push({
-        x: [0, 0], y: [0, maxY], mode: 'lines', name: `${yVar} >= 0`, line: { dash: 'dot', color: 'gray' }
+        x: [0, 0], y: [0, maxY], mode: 'lines', name: `${yVar} ≥ 0`, line: { dash: 'dot', color: 'gray' }
     });
 
     const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
     let colorIndex = 0;
 
+    // Tracer les contraintes
     for (const conKey in constraints) {
         const conType = Object.keys(constraints[conKey])[0];
         const rhs = constraints[conKey][conType];
         const xCoeff = variables[xVar]?.[conKey] || 0;
         const yCoeff = variables[yVar]?.[conKey] || 0;
 
-        if (xCoeff === 0 && yCoeff === 0) continue; // Trivial constraint, ignore for plotting
+        if (xCoeff === 0 && yCoeff === 0) continue;
 
         let x_vals = [];
         let y_vals = [];
 
-        if (yCoeff !== 0) { // y = (rhs - xCoeff * x) / yCoeff
+        if (yCoeff !== 0) {
             x_vals = Array.from({ length: 100 }, (_, i) => i * (maxX / 99));
             y_vals = x_vals.map(x => (rhs - xCoeff * x) / yCoeff);
-        } else if (xCoeff !== 0) { // x = rhs / xCoeff (vertical line)
-            x_vals = [rhs / xCoeff, rhs / xCoeff];
+        } else if (xCoeff !== 0) {
+            const xVal = rhs / xCoeff;
+            x_vals = [xVal, xVal];
             y_vals = [0, maxY];
         }
 
@@ -293,10 +338,11 @@ function plot2D(problem, result, plotDiv) {
             name: `${conKey} (${conType} ${rhs})`,
             line: { width: 2, color: colors[colorIndex % colors.length] }
         });
+
         colorIndex++;
     }
 
-    // Plot the optimal solution point
+    // Point optimal
     const optimalX = result.variables[xVar] || 0;
     const optimalY = result.variables[yVar] || 0;
     data.push({
@@ -304,12 +350,13 @@ function plot2D(problem, result, plotDiv) {
         y: [optimalY],
         mode: 'markers',
         type: 'scatter',
-        name: `Optimal Solution (p=${result.p})`,
+        name: `Optimal Solution (p = ${result.p})`,
         marker: { size: 12, color: 'red', symbol: 'star' }
     });
 
     Plotly.newPlot(plotDiv, data, layout);
 }
+
 
 function plot3D(problem, result, plotDiv) {
     const data = [];
@@ -449,3 +496,137 @@ function displaySensitivityAnalysis(result, constraints) {
         sensitivityText.textContent = "L'analyse de sensibilité n'est pas disponible pour ce problème.";
     }
 }
+
+
+
+// Pour la sauvegardes : 
+
+// Fonction pour sauvegarder le problème actuel dans le local storage
+document.getElementById('save-button').addEventListener('click', () => {
+    const objectiveFunction = objectiveFunctionInput.value;
+    const optimizationType = document.getElementById('optimization-type').value;
+    const objectiveName = document.getElementById('objective-name').value;
+    const constraints = [];
+
+    const constraintGroups = constraintsContainer.querySelectorAll('.constraint-group');
+    constraintGroups.forEach(group => {
+        const nameInput = group.querySelector('.constraint-name');
+        const expressionInput = group.querySelector('.constraint-expression');
+        const operatorSelect = group.querySelector('.constraint-operator');
+        const valueInput = group.querySelector('.constraint-value');
+        constraints.push({
+            name: nameInput.value,
+            expression: expressionInput.value,
+            operator: operatorSelect.value,
+            value: parseFloat(valueInput.value)
+        });
+    });
+
+    if (!currentResult) {
+        alert("Aucun résultat à sauvegarder. Résolvez d'abord le problème.");
+        return;
+    }
+
+    const problem = {
+        objectiveName,
+        objectiveFunction,
+        optimizationType,
+        constraints,
+        solution: {
+            variables: currentResult.variables,
+            p: currentResult.p
+        }
+    };
+
+    let savedProblems = JSON.parse(localStorage.getItem('savedProblems')) || [];
+    savedProblems.push(problem);
+    localStorage.setItem('savedProblems', JSON.stringify(savedProblems));
+
+    alert("Problème sauvegardé avec succès !");
+    displaySavedProblems();
+});
+;
+
+// Fonction pour afficher la liste des problèmes sauvegardés
+function displaySavedProblems() {
+    const savedProblemsList = document.getElementById('saved-problems-list');
+    savedProblemsList.innerHTML = '';
+
+    const savedProblems = JSON.parse(localStorage.getItem('savedProblems')) || [];
+    savedProblems.forEach((problem, index) => {
+        const problemDiv = document.createElement('div');
+        problemDiv.className = 'border border-gray-300 rounded-lg p-3 mb-2';
+        problemDiv.innerHTML = `
+            <h3 class="font-semibold text-indigo-700">${problem.objectiveName}</h3>
+            <p class="text-gray-700">${problem.objectiveFunction}</p>
+            <p class="text-gray-600">${problem.optimizationType === 'max' ? 'Maximisation' : 'Minimisation'}</p>
+            <div class="flex space-x-2 mt-2">
+                <button class="load-problem bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
+                    <i class="ph-bold ph-arrow-clockwise mr-1"></i>Charger
+                </button>
+                <button class="delete-problem bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
+                    <i class="ph-bold ph-trash mr-1"></i>Supprimer
+                </button>
+            </div>
+        `;
+        savedProblemsList.appendChild(problemDiv);
+    });
+
+    // Ajouter des écouteurs d'événements aux boutons de chargement et de suppression
+    document.querySelectorAll('.load-problem').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const index = event.target.getAttribute('data-index');
+            loadProblem(index);
+        });
+    });
+
+    document.querySelectorAll('.delete-problem').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const index = event.target.getAttribute('data-index');
+            deleteProblem(index);
+        });
+    });
+}
+
+function deleteProblem(index) {
+    let savedProblems = JSON.parse(localStorage.getItem('savedProblems')) || [];
+    savedProblems.splice(index, 1);
+    localStorage.setItem('savedProblems', JSON.stringify(savedProblems));
+    displaySavedProblems();
+    alert("Problème supprimé avec succès !");
+}
+
+
+// Fonction pour charger un problème sauvegardé
+function loadProblem(index) {
+    const savedProblems = JSON.parse(localStorage.getItem('savedProblems')) || [];
+    const problem = savedProblems[index];
+
+    // Remplir les champs avec les valeurs du problème sauvegardé
+    document.getElementById('objective-name').value = problem.objectiveName;
+    objectiveFunctionInput.value = problem.objectiveFunction;
+    document.getElementById('optimization-type').value = problem.optimizationType;
+
+    // Effacer les contraintes actuelles
+    constraintsContainer.innerHTML = '';
+
+    // Ajouter les contraintes sauvegardées
+    problem.constraints.forEach(constraint => {
+        addConstraintGroup();
+        const constraintGroups = constraintsContainer.querySelectorAll('.constraint-group');
+        const lastGroup = constraintGroups[constraintGroups.length - 1];
+        lastGroup.querySelector('.constraint-name').value = constraint.name;
+        lastGroup.querySelector('.constraint-expression').value = constraint.expression;
+        lastGroup.querySelector('.constraint-operator').value = constraint.operator;
+        lastGroup.querySelector('.constraint-value').value = constraint.value;
+    });
+
+    // Afficher la solution
+    displaySolution(problem.solution, parseProblem(problem.objectiveFunction, problem.constraints, problem.optimizationType));
+    outputSection.classList.remove('hidden');
+}
+
+// Charger la liste des problèmes sauvegardés au chargement de la page
+document.addEventListener('DOMContentLoaded', () => {
+    displaySavedProblems();
+});
