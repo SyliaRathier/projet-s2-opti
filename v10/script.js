@@ -68,19 +68,19 @@ solveButton.addEventListener('click', () => {
 
 function addConstraintGroup() {
     const constraintGroup = document.createElement('div');
-    constraintGroup.className = 'constraint-group flex flex-wrap gap-2 mb-2';
+    constraintGroup.className = 'constraint-group flex items-center space-x-3 mb-3';
     constraintGroup.innerHTML = `
         <input type="text" placeholder="Nom de la contrainte"
-            class="constraint-name flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
+            class="constraint-name flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
         <input type="text" placeholder="2x + y"
-            class="constraint-expression flex-grow border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
-        <select class="constraint-operator w-min border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
+            class="constraint-expression flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+        <select class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
             <option value="<=">≤</option>
             <option value=">=">≥</option>
             <option value="=">=</option>
         </select>
         <input type="text" placeholder="10"
-            class="constraint-value flex-grow border border-gray-300 rounded-lg py-2 px-3 w-1 text-gray-800">
+            class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
         <button class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition" type="button">
             <i class="ph-bold ph-trash"></i>
         </button>
@@ -92,6 +92,7 @@ function addConstraintGroup() {
         constraintGroup.remove();
     });
 }
+
 
 
 constraintsContainer.addEventListener('click', (event) => {
@@ -562,10 +563,10 @@ function displaySavedProblems() {
             <p class="text-gray-600">${problem.optimizationType === 'max' ? 'Maximisation' : 'Minimisation'}</p>
             <div class="flex space-x-2 mt-2">
                 <button class="load-problem bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
-                    <i class="ph-bold ph-arrow-clockwise mr-1"></i>Charger
+                    <i class="ph-bold ph-arrow-clockwise mr-1"></i>
                 </button>
                 <button class="delete-problem bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
-                    <i class="ph-bold ph-trash mr-1"></i>Supprimer
+                    <i class="ph-bold ph-trash mr-1"></i>
                 </button>
             </div>
         `;
@@ -579,10 +580,6 @@ function displaySavedProblems() {
             loadProblem(index);
         });
     });
-
-
-
-
 
 
     document.querySelectorAll('.delete-problem').forEach(button => {
@@ -634,4 +631,17 @@ function loadProblem(index) {
 // Charger la liste des problèmes sauvegardés au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
     displaySavedProblems();
+});
+
+
+document.getElementById('save-button').addEventListener('click', function () {
+    // Affiche les sections de solution
+    document.getElementById('output-section').classList.remove('hidden');
+    document.getElementById('tableaux-section').classList.remove('hidden');
+    document.getElementById('graph-section').classList.remove('hidden');
+    document.getElementById('sensitivity-section').classList.remove('hidden');
+
+    // Si tu as du code pour sauvegarder et restaurer la solution, tu peux l'appeler ici
+
+    alert("Problème sauvegardé et solution affichée !");
 });
