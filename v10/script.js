@@ -90,7 +90,7 @@ function addConstraintGroup() {
     const removeButton = constraintGroup.querySelector('.remove-constraint');
     removeButton.addEventListener('click', () => {
         constraintGroup.remove();
-    }); 
+    });
 }
 
 
@@ -581,6 +581,7 @@ function displaySavedProblems() {
         });
     });
 
+
     document.querySelectorAll('.delete-problem').forEach(button => {
         button.addEventListener('click', (event) => {
             const index = event.target.getAttribute('data-index');
@@ -633,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-document.getElementById('save-button').addEventListener('click', function() {
+document.getElementById('save-button').addEventListener('click', function () {
     // Affiche les sections de solution
     document.getElementById('output-section').classList.remove('hidden');
     document.getElementById('tableaux-section').classList.remove('hidden');
