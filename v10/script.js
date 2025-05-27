@@ -580,6 +580,11 @@ function displaySavedProblems() {
         });
     });
 
+
+
+
+
+
     document.querySelectorAll('.delete-problem').forEach(button => {
         button.addEventListener('click', (event) => {
             const index = event.target.getAttribute('data-index');
