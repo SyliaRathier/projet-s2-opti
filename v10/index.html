@@ -1,336 +1,302 @@
-    <!DOCTYPE html>
-    <html lang="fr">
+<!DOCTYPE html>
+<html lang="fr">
 
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>OptiSolve - Résolution de Problèmes d'Optimisation</title>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OptiSolve - Résolution de Problèmes d'Optimisation</title>
 
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-        <style>
-            body {
-                font-family: 'Inter', sans-serif;
-            }
+    <style>
+        :root {
+            --background-color: #f8f9fa;
+            --text-color: #2d3748;
+            --input-background: #fff;
+            --input-border: #e2e8f0;
+            --button-background: linear-gradient(to right, #6366f1, #3b82f6);
+            --button-hover: linear-gradient(to right, #4f46e5, #2563eb);
+            --button-active: linear-gradient(to right, #4338ca, #1d4ed8);
+            --result-background: #e6f0ff;
+            --result-border: #b3d9ff;
+            --table-header: #f0f4f8;
+            --table-even: rgba(241, 245, 249, 0.5);
+            --pivot-row: #bee3f8;
+            /* bleu très clair */
+            --pivot-col: #bee3f8;
+            /* bleu clair */
+            --pivot-cell: #3182ce;
+            /* bleu vif */
+            --pivot-cell-font: #fff;
+            /* texte blanc pour bonne visibilité */
+        }
 
-          .dark-mode {
-        background: #1a202c;
-        color: #f7fafc;
-    }
+        .dark-mode {
+            --background-color: #1a202c;
+            --text-color: #f7fafc;
+            --input-background: #2d3748;
+            --input-border: #4a5568;
+            --button-background: linear-gradient(to right, #667eea, #5a67d8);
+            --button-hover: linear-gradient(to right, #5a67d8, #4c51bf);
+            --button-active: linear-gradient(to right, #4c51bf, #3182ce);
+            --result-background: #283149;
+            --result-border: #3e4c66;
+            --table-header: #2d3748;
+            --table-even: #1a202c;
+            --pivot-row: #2c5282;
+            --pivot-col: #2b6cb0;
+            --pivot-cell: #3182ce;
+            --pivot-row-font: #f7fafc;
+        }
 
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background-color);
+            color: var(--text-color);
+            transition: background 0.3s, color 0.3s;
+        }
 
-            .container {
-                background-color: white;
-                border-radius: 1rem;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                padding: 2rem;
-                width: 100%;
-                max-width: 60rem;
-                color: #2d3748;
-            }
+        .container {
+            background-color: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            width: 100%;
+            max-width: 60rem;
+            color: var(--text-color);
+            background: var(--background-color);
+            transition: background 0.3s, color 0.3s;
+        }
 
-            .dark-mode .container {
-                background-color: #2d3748;
-                color: #f7fafc;
-            }
+        input,
+        select {
+            background-color: var(--input-background);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+        }
 
-            input,
-            select {
-                background-color: #fff;
-                border: 1px solid #e2e8f0;
-                color: #2d3748;
-                border-radius: 0.5rem;
-                padding: 0.5rem 0.75rem;
-                width: 100%;
-                transition: all 0.2s ease-in-out;
-            }
+        input:focus,
+        select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            outline: none;
+        }
 
-            input:focus,
-            select:focus {
-                border-color: #6366f1;
-                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-                outline: none;
-            }
+        input::placeholder,
+        textarea::placeholder {
+            color: #a0aec0;
+        }
 
-            .dark-mode input,
-            .dark-mode select {
-                background-color: #2d3748;
-                border-color: #4a5568;
-                color: #f7fafc;
-            }
-            .dark-mode input::placeholder,
-            .dark-mode textarea::placeholder {
-                color: #d1d5db; /* gris clair */
-            }
+        .dark-mode input::placeholder,
+        .dark-mode textarea::placeholder {
+            color: #d1d5db;
+        }
 
-
-            button {
-                background: linear-gradient(to right, #6366f1, #3b82f6);
-                color: white;
-                border: none;
-                border-radius: 9999px;
-                padding: 0.75rem 1.5rem;
-                cursor: pointer;
-                font-weight: 600;
-                box-shadow: 0 4px 6px rgb(99 102 241 / 0.5);
-                transition: background 0.3s ease, box-shadow 0.3s ease;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            button:hover {
-                background: linear-gradient(to right, #4f46e5, #2563eb);
-                box-shadow: 0 6px 12px rgb(79 70 229 / 0.7);
-            }
-
-            button:active {
-                background: linear-gradient(to right, #4338ca, #1d4ed8);
-                box-shadow: none;
-            }
-
-            button i {
-                margin-right: 0.5rem;
-            }
-
-            #output-section,
-            #tableaux-section,
-            #graph-section,
-            #sensitivity-section,
-            #saved-problems-section {
-                background-color: #e6f0ff;
-                border: 1px solid #b3d9ff;
-                border-radius: 0.5rem;
-                margin-bottom: 1rem;
-                overflow: hidden;
-                color: #2d3748;
-            }
-
-            .dark-mode #output-section,
-            .dark-mode #tableaux-section,
-            .dark-mode #graph-section,
-            .dark-mode #sensitivity-section,
-            .dark-mode #saved-problems-section {
-                background-color: #283149;
-                border-color: #3e4c66;
-                color: #f7fafc;
-            }
-
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 1rem;
-                color: inherit;
-            }
-
-            table th,
-            table td {
-                border: 1px solid #e2e8f0;
-                padding: 0.75rem;
-                text-align: center;
-            }
-
-            table th {
-                background-color: #f0f4f8;
-                font-weight: 600;
-            }
-
-            .dark-mode table th {
-                background-color: #2d3748;
-                color: #f7fafc;
-            }
-
-            table tr:nth-child(even) {
-                background-color: rgba(241, 245, 249, 0.5);
-            }
-
-            .dark-mode table tr:nth-child(even) {
-                background-color: #1a202c;
-            }
-
-            /* Classes pivotées */
-            .pivot-row {
-                background-color: #c3f0ca !important;
-                font-weight: bold;
-            }
-
-            .pivot-col {
-                background-color: #fff4c2 !important;
-                font-weight: bold;
-            }
-
-            .pivot-cell {
-                background-color: #ffd6d6 !important;
-                font-weight: bold;
-            }
-
-            /* Dark mode pivot */
-            .dark-mode .pivot-row {
-                background-color: #2c5282 !important; /* vert foncé */
-                color: #f7fafc !important;
-            }
-
-            .dark-mode .pivot-col {
-                background-color: #2b6cb0 !important; /* ambre/brun */
-                color: #f7fafc !important;
-            }
-
-            .dark-mode .pivot-cell {
-                background-color: #3182ce !important; /* rouge foncé */
-                color: #fff !important;
-                font-weight: bold;
-            }
-
-            /* Toggle mode button */
-            .mode-toggle {
-                position: fixed;
-                top: 1rem;
-                right: 1rem;
-                background-color: #6366f1;
-                color: white;
-                border: none;
-                border-radius: 9999px;
-                width: 2.5rem;
-                height: 2.5rem;
-                cursor: pointer;
-                box-shadow: 0 2px 8px rgb(99 102 241 / 0.7);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: background-color 0.3s ease, transform 0.3s ease;
-            }
-
-            .mode-toggle:hover {
-                background-color: #4f46e5;
-                transform: translateY(-2px) scale(1.1);
-            }
-
-            .mode-toggle:active {
-                background-color: #4338ca;
-                transform: translateY(0) scale(0.9);
-                box-shadow: 0 1px 3px rgb(67 56 202 / 0.6);
-            }
-
-            .mode-toggle i {
-                font-size: 1.5rem;
-                color: white;
-                transition: transform 0.3s ease;
-            }
-
-            .dark-mode .mode-toggle i {
-                transform: rotate(30deg);
-            }
-
-
-            #solve-button {
-    background: linear-gradient(to right, #4f46e5, #2563eb);
-    color: white;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
-    box-shadow: 0 4px 6px rgb(79 70 229 / 0.7);
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s ease, box-shadow 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#solve-button:hover {
-    background: linear-gradient(to right, #4338ca, #1d4ed8);
-    box-shadow: 0 6px 12px rgb(67 56 202 / 0.8);
-}
-
-#solve-button:active {
-    background: linear-gradient(to right, #3730a3, #1e40af);
-    box-shadow: none;
-}
-
-#solve-button i {
-    margin-right: 0.5rem;
-}
+        button {
+            background: var(--button-background);
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            /*box-shadow: 0 4px 6px rgba(99, 102, 241, 0.5);*/
+            transition: background 0.3s, box-shadow 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
 
 
 
+        button:active {
+            background: var(--button-active);
+            box-shadow: none;
+        }
 
-.dark-mode label {
-    color: #f7fafc !important;
-}
+        button i {
+            margin-right: 0.5rem;
+        }
 
-/* Si certains textes sont gris clair par défaut, forcer la couleur */
-.dark-mode .text-gray-600,
-.dark-mode .text-gray-700,
-.dark-mode .text-gray-800,
-.dark-mode .text-indigo-800 {
-    color: #f7fafc !important;
-}
-.dark-mode .bg-indigo-50 {
-    background-color: #283149 !important; /* fond foncé */
-    color: #f7fafc !important; /* texte clair */
-}
+        #output-section,
+        #tableaux-section,
+        #graph-section,
+        #sensitivity-section,
+        #saved-problems-section {
+            background-color: var(--result-background);
+            border: 1px solid var(--result-border);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            color: var(--text-color);
+        }
 
-.dark-mode .bg-indigo-50 * {
-    color: #f7fafc !important; /* forcer texte clair dans tous les éléments enfants */
-}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            color: inherit;
+        }
+
+        table th,
+        table td {
+            border: 1px solid var(--input-border);
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        table th {
+            background-color: var(--table-header);
+            font-weight: 600;
+        }
+
+        /* table tr:nth-child(even) {
+            background-color: var(--table-even);
+        } */
+
+        /* Classes pivotées */
+        .pivot-row {
+            background-color: var(--pivot-row) !important;
+            font-weight: bold;
+        }
+
+        .pivot-col {
+            background-color: var(--pivot-col) !important;
+            font-weight: bold;
+        }
+
+        .pivot-cell {
+            background-color: var(--pivot-cell) !important;
+            color: var(--pivot-cell-font) !important;
+            font-weight: bold;
+        }
+
+        /* Toggle mode button */
+        .mode-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            width: 2.5rem;
+            height: 2.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgb(99 102 241 / 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .mode-toggle:hover {
+            background-color: #4f46e5;
+            transform: translateY(-2px) scale(1.1);
+        }
+
+        .mode-toggle:active {
+            background-color: #4338ca;
+            transform: translateY(0) scale(0.9);
+            box-shadow: 0 1px 3px rgb(67 56 202 / 0.6);
+        }
+
+        .mode-toggle i {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            width: 100%;
+            height: 100%;
+            margin: 0 !important;
+            /* retire les marges héritées */
+        }
+
+        .dark-mode .mode-toggle i {
+            transform: rotate(30deg);
+        }
+
+        /* Override for special button cases */
+        #solve-button,
+        #save-button {
+            background: var(--button-background);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px rgb(79 70 229 / 0.7);
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s, box-shadow 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #solve-button:hover,
+        #save-button:hover {
+            background: var(--button-hover);
+            box-shadow: 0 6px 12px rgb(67 56 202 / 0.8);
+        }
+
+        #solve-button:active,
+        #save-button:active {
+            background: var(--button-active);
+            box-shadow: none;
+        }
+
+        #solve-button i,
+        #save-button i {
+            margin-right: 0.5rem;
+        }
+
+        /* Text color overrides for dark mode */
+        .dark-mode label,
+        .dark-mode .text-gray-600,
+        .dark-mode .text-gray-700,
+        .dark-mode .text-gray-800,
+        .dark-mode .text-indigo-800 {
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .bg-indigo-50 {
+            background-color: var(--result-background) !important;
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .bg-indigo-50 * {
+            color: var(--text-color) !important;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex justify-center items-start py-10 px-4 transition-colors duration-300">
 
 
 
-#save-button {
-    background: linear-gradient(to right, #4f46e5, #2563eb);
-    color: white;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
-    box-shadow: 0 4px 6px rgb(79 70 229 / 0.7);
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s ease, box-shadow 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
+    <button class="mode-toggle" onclick="toggleMode()">
+        <i class="ph-bold ph-moon"></i>
+    </button>
 
-#save-button:hover {
-    background: linear-gradient(to right, #4338ca, #1d4ed8);
-    box-shadow: 0 6px 12px rgb(67 56 202 / 0.8);
-}
+    <div class="container flex flex-col md:flex-row md:space-x-8 max-w-7xl">
+        <div class="md:w-2/3">
 
-
-
-#save-button:active {
-    background: linear-gradient(to right, #3730a3, #1e40af);
-    box-shadow: none;
-}
-
-#save-button i {
-    margin-right: 0.5rem;
-}
-
-        </style>
-    </head>
-
-    <body class="min-h-screen flex justify-center items-start py-10 px-4 transition-colors duration-300">
-
-
-
-        <button class="mode-toggle" onclick="toggleMode()">
-            <i class="ph-bold ph-moon"></i>
-        </button>
-
-        <div class="container">
             <h1 class="text-3xl font-bold text-center text-blue-800 mb-4">Méthode du simplexe</h1>
             <p class="text-gray-700 text-center mb-6">
                 Résolvez vos problèmes d'optimisation linéaire avec la méthode du Simplex.
             </p>
 
-            
+
             <!-- Section 1 -->
             <div id="input-section" class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
                 <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">
@@ -338,7 +304,8 @@
                 </div>
                 <div class="p-5 space-y-4">
                     <div>
-                        <label for="optimization-type" class="block text-gray-700 text-sm font-semibold mb-1">Type d'optimisation:</label>
+                        <label for="optimization-type" class="block text-gray-700 text-sm font-semibold mb-1">Type
+                            d'optimisation:</label>
                         <select id="optimization-type"
                             class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300">
                             <option value="max">Maximisation</option>
@@ -349,14 +316,17 @@
                     <div class="flex flex-row space-x-4">
                         <!-- Nom fonction objectif -->
                         <div class="flex-1">
-                            <label for="objective-name" class="block text-gray-700 text-sm font-semibold mb-1">Nom de la Fonction Objective:</label>
+                            <label for="objective-name" class="block text-gray-700 text-sm font-semibold mb-1">Nom de la
+                                Fonction Objective:</label>
                             <input type="text" id="objective-name" placeholder="Nom de la fonction"
                                 class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
                         </div>
 
                         <!-- Fonction objectif -->
                         <div class="flex-1">
-                            <label for="objective-function" class="block text-gray-700 text-sm font-semibold mb-1">Fonction Objective (e.g., 3x + 5y):</label>
+                            <label for="objective-function"
+                                class="block text-gray-700 text-sm font-semibold mb-1">Fonction
+                                Objective (e.g., 3x + 5y):</label>
                             <input type="text" id="objective-function" placeholder="3x + 5y"
                                 class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
                         </div>
@@ -365,26 +335,35 @@
                     <div>
                         <label class="block tex t-gray-700 text-sm font-semibold mb-2">Contraintes:</label>
                         <div id="constraints-container">
-                           <div class="constraint-group flex items-center space-x-3 mb-3">
-                            <input type="text" placeholder="Nom de la contrainte"
-                                class="constraint-name flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
-                            
-                            <input type="text" placeholder="2x + y"
-                                class="constraint-expression flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
-                            
-                            <select class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
-                                <option value="<=">≤</option>
-                                <option value=">=">≥</option>
-                                <option value="=">=</option>
-                            </select>
-                            
-                            <input type="text" placeholder="10"
-                                class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
-                            
-                            <button type="button" class="add-constraint bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition">
-                                <i class="ph-bold ph-plus"></i>
-                            </button>
+                            <div class="constraint-group flex items-center space-x-3 mb-3">
+                                <input type="text" placeholder="Nom de la contrainte"
+                                    class="constraint-name flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+
+                                <input type="text" placeholder="2x + y"
+                                    class="constraint-expression flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+
+                                <select
+                                    class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
+                                    <option value="<=">≤</option>
+                                    <option value=">=">≥</option>
+                                    <option value="=">=</option>
+                                </select>
+
+                                <input type="text" placeholder="10"
+                                    class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800 " />
+
+                                <button
+                                    class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition shadow-[0_4px_6px_rgba(241,99,99,0.5)]"
+                                    type="button">
+                                    <i class="ph-bold ph-trash"></i>
+                                </button>
+
                             </div>
+                            <button type="button"
+                                class="add-constraint bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition shadow-[0_4px_6px_rgba(99,102,241,0.5)]">
+                                <i class="add-constraint ph-bold ph-plus"></i>
+                                Ajouter une contrainte
+                            </button>
 
                         </div>
                     </div>
@@ -421,7 +400,8 @@
 
             <!-- Graphique -->
             <div id="graph-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
-                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">4. Représentation Graphique</div>
+                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">4. Représentation Graphique
+                </div>
                 <div class="p-5">
                     <div id="plot"></div>
                 </div>
@@ -429,42 +409,47 @@
 
             <!-- Analyse de Sensibilité -->
             <div id="sensitivity-section" class="hidden border border-gray-200 rounded-xl overflow-hidden">
-                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">5. Analyse de Sensibilité</div>
+                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">5. Analyse de Sensibilité
+                </div>
                 <div class="p-5">
                     <div id="sensitivity-text" class="text-md text-gray-700"></div>
                 </div>
             </div>
         </div>
-
-        <!-- Liste des problèmes sauvegardés -->
-        <div id="saved-problems-section" class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
-            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">6. Problèmes Sauvegardés</div>
-            <div class="p-5">
-                <div id="saved-problems-list" class="space-y-2"></div>
+        <div class="md:w-1/3 mt-8 md:mt-0">
+            <div id="saved-problems-section"
+                class="mb-8 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-lg">
+                <div
+                    class="bg-indigo-50 dark:bg-gray-700 py-3 px-5 font-semibold text-indigo-800 dark:text-gray-200 text-lg">
+                    6. Problèmes Sauvegardés</div>
+                <div class="p-5 dark:bg-gray-800">
+                    <div id="saved-problems-list" class="space-y-2">
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
+    <!-- Scripts -->
+    <script src="./simplexe2phases.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="./script.js"></script>
 
-        <!-- Scripts -->
-        <script src="./simplexe2phases.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="./script.js"></script>
+    <script>
+        function toggleMode() {
+            const body = document.body;
+            const modeToggle = document.querySelector('.mode-toggle');
+            const moonIcon = modeToggle.querySelector('i');
 
-        <script>
-            function toggleMode() {
-                const body = document.body;
-                const modeToggle = document.querySelector('.mode-toggle');
-                const moonIcon = modeToggle.querySelector('i');
+            body.classList.toggle('dark-mode');
 
-                body.classList.toggle('dark-mode');
-
-                const isDark = body.classList.contains('dark-mode');
-                if (isDark) {
-                    moonIcon.classList.replace('ph-moon', 'ph-sun');
-                } else {
-                    moonIcon.classList.replace('ph-sun', 'ph-moon');
-                }
+            const isDark = body.classList.contains('dark-mode');
+            if (isDark) {
+                moonIcon.classList.replace('ph-moon', 'ph-sun');
+            } else {
+                moonIcon.classList.replace('ph-sun', 'ph-moon');
             }
-        </script>
-    </body>
+        }
+    </script>
+</body>
 
-    </html>
+</html>
