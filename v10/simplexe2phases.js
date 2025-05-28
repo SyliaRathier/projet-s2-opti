@@ -278,4 +278,3 @@ const problemeMinTest = {
 //         console.log(label + "\t" + row.map(n => Math.round(n * 1000) / 1000).join("\t"));
 //     });
 // });
-
