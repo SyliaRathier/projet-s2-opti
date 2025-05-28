@@ -85,12 +85,25 @@ function addConstraintGroup() {
             <i class="ph-bold ph-trash"></i>
         </button>
     `;
-    constraintsContainer.appendChild(constraintGroup);
+
+    // Déplacer le bouton "Ajouter une contrainte" après la nouvelle contrainte
+    // On suppose que le bouton a la classe "add-constraint"
+    const addBtn = constraintsContainer.querySelector('.add-constraint');
+    if (addBtn) {
+        constraintsContainer.insertBefore(constraintGroup, addBtn);
+    } else {
+        constraintsContainer.appendChild(constraintGroup);
+    }
 
     const removeButton = constraintGroup.querySelector('.remove-constraint');
     removeButton.addEventListener('click', () => {
         constraintGroup.remove();
-    }); 
+        // Remettre le bouton "Ajouter une contrainte" à la fin si plus de contraintes
+        const addBtn = constraintsContainer.querySelector('.add-constraint');
+        if (addBtn) {
+            constraintsContainer.appendChild(addBtn);
+        }
+    });
 }
 
 
