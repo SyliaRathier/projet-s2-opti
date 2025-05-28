@@ -71,32 +71,26 @@ function addConstraintGroup() {
     constraintGroup.className = 'constraint-group flex items-center space-x-3 mb-3';
     constraintGroup.innerHTML = `
         <input type="text" placeholder="Nom de la contrainte"
-            class="constraint-name flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
+            class="constraint-name flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
         <input type="text" placeholder="2x + y"
-            class="constraint-expression flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
+            class="constraint-expression flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
         <select class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
             <option value="<=">≤</option>
             <option value=">=">≥</option>
             <option value="=">=</option>
         </select>
         <input type="text" placeholder="10"
-            class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800">
-        <button class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition shadow-[0_4px_6px_rgba(241,99,99,0.5)]" type="button">
+            class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+        <button class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition" type="button">
             <i class="ph-bold ph-trash"></i>
         </button>
     `;
+    constraintsContainer.appendChild(constraintGroup);
 
-    // Trouver le bouton "Ajouter une contrainte"
-    const addButton = document.querySelector('.add-constraint');
-
-    // Insérer avant le bouton
-    constraintsContainer.insertBefore(constraintGroup, addButton);
-
-    // Ajouter l'event pour suppression
     const removeButton = constraintGroup.querySelector('.remove-constraint');
     removeButton.addEventListener('click', () => {
         constraintGroup.remove();
-    });
+    }); 
 }
 
 
@@ -493,15 +487,83 @@ function plot3D(problem, result, plotDiv) {
 
 
 function displaySensitivityAnalysis(result, constraints) {
-    let sensitivityTextString = "Analyse de Sensibilité:\n";
-    if (result.sensitivity && result.sensitivity.length > 0) {
-        result.sensitivity.forEach(s => {
-            sensitivityTextString += `- Contrainte ${s.constraint}: Prix dual = ${s.shadowPrice.toFixed(2)}, Augmentation permise = ${s.allowableIncrease.toFixed(2)}, Diminution permise = ${s.allowableDecrease.toFixed(2)}\n`;
-        });
-        sensitivityText.textContent = sensitivityTextString;
-    } else {
-        sensitivityText.textContent = "L'analyse de sensibilité n'est pas disponible pour ce problème.";
+    if (!result.tableaux || result.tableaux.length === 0) {
+        sensitivityText.innerHTML = "L'analyse de sensibilité n'est pas disponible pour ce problème.";
+        return;
     }
+
+    const lastTableau = result.tableaux[result.tableaux.length - 1];
+    const headers = lastTableau.headers;
+    const basis = lastTableau.basis;
+    const rows = lastTableau.rows;
+    const objRow = rows[rows.length - 1];
+
+    let sensitivityHtml = `<form id="sensitivity-form" onsubmit="return false;"><table class="min-w-full text-sm"><thead><tr>
+        <th>Contrainte</th>
+        <th>Prix dual</th>
+        <th>Valeur RHS</th>
+        <th>Tester une nouvelle valeur</th>
+    </tr></thead><tbody>`;
+
+    constraints.forEach((constraint, idx) => {
+        const constraintName = constraint.name || `c${idx + 1}`;
+        const slackIdx = headers.indexOf(constraintName);
+        let shadowPrice = 0;
+        if (slackIdx !== -1) {
+            shadowPrice = -objRow[slackIdx];
+        }
+        let rhsValue = 0;
+        const basisIdx = basis.indexOf(constraintName);
+        if (basisIdx !== -1) {
+            rhsValue = rows[basisIdx][rows[basisIdx].length - 1];
+        }
+        sensitivityHtml += `<tr>
+            <td>${constraintName}</td>
+            <td>${shadowPrice.toFixed(4)}</td>
+            <td>${rhsValue.toFixed(4)}</td>
+            <td>
+                <input type="number" step="any" name="rhs_${idx}" value="${constraint.value}" style="width:80px" />
+                <button type="button" class="test-sensitivity-btn" data-idx="${idx}">Tester</button>
+            </td>
+        </tr>`;
+    });
+
+    sensitivityHtml += "</tbody></table></form>";
+    sensitivityText.innerHTML = sensitivityHtml;
+
+    // Empêcher le submit du formulaire (sécurité supplémentaire)
+    const form = document.getElementById('sensitivity-form');
+    if (form) {
+        form.addEventListener('submit', function(e) { e.preventDefault(); });
+    }
+
+    // Correction : Utiliser addEventListener au lieu de .onclick pour éviter les conflits
+    document.querySelectorAll('.test-sensitivity-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const idx = parseInt(this.getAttribute('data-idx'));
+            const form = document.getElementById('sensitivity-form');
+            const newConstraints = constraints.map((c, i) => ({
+                ...c,
+                value: parseFloat(form.elements[`rhs_${i}`].value)
+            }));
+            const objectiveFunction = objectiveFunctionInput.value;
+            const optimizationType = document.getElementById('optimization-type').value;
+            const problem = parseProblem(objectiveFunction, newConstraints, optimizationType);
+            let newResult;
+            try {
+                const solver = new LinearProgrammingSolver(problem);
+                newResult = solver.solve();
+            } catch (e) {
+                sensitivityText.innerHTML += `<div style="color:red;">Problème non réalisable ou erreur de résolution.</div>`;
+                return;
+            }
+            displaySolution(newResult, problem);
+            displayTableaux(newResult.tableaux);
+            plotSolution(problem, newResult);
+            displaySensitivityAnalysis(newResult, newConstraints);
+        });
+    });
 }
 
 
@@ -549,7 +611,7 @@ document.getElementById('save-button').addEventListener('click', () => {
     savedProblems.push(problem);
     localStorage.setItem('savedProblems', JSON.stringify(savedProblems));
 
-    alert("Sauvegardé avec succès !");
+    alert("Problème sauvegardé avec succès !");
     displaySavedProblems();
 });
 ;
@@ -569,10 +631,10 @@ function displaySavedProblems() {
             <p class="text-gray-600">${problem.optimizationType === 'max' ? 'Maximisation' : 'Minimisation'}</p>
             <div class="flex space-x-2 mt-2">
                 <button class="load-problem bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
-                    <i class="ph-bold ph-arrow-clockwise mr-1 " data-index="${index}"></i>
+                    <i class="ph-bold ph-arrow-clockwise mr-1"></i>
                 </button>
                 <button class="delete-problem bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
-                    <i class="ph-bold ph-trash mr-1" data-index="${index}"></i>
+                    <i class="ph-bold ph-trash mr-1"></i>
                 </button>
             </div>
         `;
@@ -581,14 +643,11 @@ function displaySavedProblems() {
 
     // Ajouter des écouteurs d'événements aux boutons de chargement et de suppression
     document.querySelectorAll('.load-problem').forEach(button => {
-        console.log(".load-problem")
         button.addEventListener('click', (event) => {
-            console.log("click")
             const index = event.target.getAttribute('data-index');
             loadProblem(index);
         });
     });
-
 
     document.querySelectorAll('.delete-problem').forEach(button => {
         button.addEventListener('click', (event) => {
@@ -597,7 +656,6 @@ function displaySavedProblems() {
         });
     });
 }
-//hhhhhh
 
 function deleteProblem(index) {
     let savedProblems = JSON.parse(localStorage.getItem('savedProblems')) || [];
@@ -632,34 +690,17 @@ function loadProblem(index) {
         lastGroup.querySelector('.constraint-value').value = constraint.value;
     });
 
-    // Ajouter le bouton "Ajouter une contrainte" à la fin
-    const addButton = document.createElement('button');
-    addButton.className = 'add-constraint bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition mt-3';
-    addButton.type = 'button';
-    addButton.innerHTML = '<i class="ph-bold ph-plus"></i> Ajouter une contrainte';
-    constraintsContainer.appendChild(addButton);
-
     // Afficher la solution
     displaySolution(problem.solution, parseProblem(problem.objectiveFunction, problem.constraints, problem.optimizationType));
     outputSection.classList.remove('hidden');
 }
 
-
 // Charger la liste des problèmes sauvegardés au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
     displaySavedProblems();
-
 });
 
 
-document.getElementById('save-button').addEventListener('click', function () {
-    // Affiche les sections de solution
-    document.getElementById('output-section').classList.remove('hidden');
-    document.getElementById('tableaux-section').classList.remove('hidden');
-    document.getElementById('graph-section').classList.remove('hidden');
-    document.getElementById('sensitivity-section').classList.remove('hidden');
 
-    // Si tu as du code pour sauvegarder et restaurer la solution, tu peux l'appeler ici
 
-    //alert("Problème sauvegardé et solution affichée !");
-});
+
