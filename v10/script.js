@@ -631,16 +631,3 @@ function loadProblem(index) {
 document.addEventListener('DOMContentLoaded', () => {
     displaySavedProblems();
 });
-
-
-document.getElementById('save-button').addEventListener('click', function() {
-    // Affiche les sections de solution
-    document.getElementById('output-section').classList.remove('hidden');
-    document.getElementById('tableaux-section').classList.remove('hidden');
-    document.getElementById('graph-section').classList.remove('hidden');
-    document.getElementById('sensitivity-section').classList.remove('hidden');
-
-    // Si tu as du code pour sauvegarder et restaurer la solution, tu peux l'appeler ici
-
-    alert("Problème sauvegardé et solution affichée !");
-});
