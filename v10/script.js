@@ -632,10 +632,18 @@ function loadProblem(index) {
         lastGroup.querySelector('.constraint-value').value = constraint.value;
     });
 
+    // Ajouter le bouton "Ajouter une contrainte" à la fin
+    const addButton = document.createElement('button');
+    addButton.className = 'add-constraint bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition mt-3';
+    addButton.type = 'button';
+    addButton.innerHTML = '<i class="ph-bold ph-plus"></i> Ajouter une contrainte';
+    constraintsContainer.appendChild(addButton);
+
     // Afficher la solution
     displaySolution(problem.solution, parseProblem(problem.objectiveFunction, problem.constraints, problem.optimizationType));
     outputSection.classList.remove('hidden');
 }
+
 
 // Charger la liste des problèmes sauvegardés au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
