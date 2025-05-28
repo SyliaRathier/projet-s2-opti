@@ -631,6 +631,7 @@ function loadProblem(index) {
 // Charger la liste des problèmes sauvegardés au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
     displaySavedProblems();
+
 });
 
 
