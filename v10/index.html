@@ -110,17 +110,14 @@
             padding: 0.75rem 1.5rem;
             cursor: pointer;
             font-weight: 600;
-            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.5);
+            /*box-shadow: 0 4px 6px rgba(99, 102, 241, 0.5);*/
             transition: background 0.3s, box-shadow 0.3s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
         }
 
-        button:hover {
-            background: var(--button-hover);
-            box-shadow: 0 6px 12px rgba(79, 70, 229, 0.7);
-        }
+
 
         button:active {
             background: var(--button-active);
@@ -353,13 +350,20 @@
                                 </select>
 
                                 <input type="text" placeholder="10"
-                                    class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+                                    class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800 " />
 
-                                <button type="button"
-                                    class="add-constraint bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition">
-                                    <i class="ph-bold ph-plus"></i>
+                                <button
+                                    class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition shadow-[0_4px_6px_rgba(241,99,99,0.5)]"
+                                    type="button">
+                                    <i class="ph-bold ph-trash"></i>
                                 </button>
+
                             </div>
+                            <button type="button"
+                                class="add-constraint bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition shadow-[0_4px_6px_rgba(99,102,241,0.5)]">
+                                <i class="add-constraint ph-bold ph-plus"></i>
+                                Ajouter une contrainte
+                            </button>
 
                         </div>
                     </div>
