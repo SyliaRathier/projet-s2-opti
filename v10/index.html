@@ -26,7 +26,7 @@
             --result-border: #b3d9ff;
             --table-header: #f0f4f8;
             --table-even: rgba(241, 245, 249, 0.5);
-            --pivot-row: #e3f0fd;
+            --pivot-row: #bee3f8;
             /* bleu très clair */
             --pivot-col: #bee3f8;
             /* bleu clair */
@@ -163,9 +163,9 @@
             font-weight: 600;
         }
 
-        table tr:nth-child(even) {
+        /* table tr:nth-child(even) {
             background-color: var(--table-even);
-        }
+        } */
 
         /* Classes pivotées */
         .pivot-row {
@@ -291,131 +291,140 @@
         <i class="ph-bold ph-moon"></i>
     </button>
 
-    <div class="container">
-        <h1 class="text-3xl font-bold text-center text-blue-800 mb-4">Méthode du simplexe</h1>
-        <p class="text-gray-700 text-center mb-6">
-            Résolvez vos problèmes d'optimisation linéaire avec la méthode du Simplex.
-        </p>
+    <div class="container flex flex-col md:flex-row md:space-x-8 max-w-7xl">
+        <div class="md:w-2/3">
+
+            <h1 class="text-3xl font-bold text-center text-blue-800 mb-4">Méthode du simplexe</h1>
+            <p class="text-gray-700 text-center mb-6">
+                Résolvez vos problèmes d'optimisation linéaire avec la méthode du Simplex.
+            </p>
 
 
-        <!-- Section 1 -->
-        <div id="input-section" class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
-            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">
-                1. Entrez les données du problème
-            </div>
-            <div class="p-5 space-y-4">
-                <div>
-                    <label for="optimization-type" class="block text-gray-700 text-sm font-semibold mb-1">Type
-                        d'optimisation:</label>
-                    <select id="optimization-type"
-                        class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300">
-                        <option value="max">Maximisation</option>
-                        <option value="min">Minimisation</option>
-                    </select>
+            <!-- Section 1 -->
+            <div id="input-section" class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
+                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">
+                    1. Entrez les données du problème
                 </div>
-
-                <div class="flex flex-row space-x-4">
-                    <!-- Nom fonction objectif -->
-                    <div class="flex-1">
-                        <label for="objective-name" class="block text-gray-700 text-sm font-semibold mb-1">Nom de la
-                            Fonction Objective:</label>
-                        <input type="text" id="objective-name" placeholder="Nom de la fonction"
-                            class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
+                <div class="p-5 space-y-4">
+                    <div>
+                        <label for="optimization-type" class="block text-gray-700 text-sm font-semibold mb-1">Type
+                            d'optimisation:</label>
+                        <select id="optimization-type"
+                            class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300">
+                            <option value="max">Maximisation</option>
+                            <option value="min">Minimisation</option>
+                        </select>
                     </div>
 
-                    <!-- Fonction objectif -->
-                    <div class="flex-1">
-                        <label for="objective-function" class="block text-gray-700 text-sm font-semibold mb-1">Fonction
-                            Objective (e.g., 3x + 5y):</label>
-                        <input type="text" id="objective-function" placeholder="3x + 5y"
-                            class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block tex t-gray-700 text-sm font-semibold mb-2">Contraintes:</label>
-                    <div id="constraints-container">
-                        <div class="constraint-group flex items-center space-x-3 mb-3">
-                            <input type="text" placeholder="Nom de la contrainte"
-                                class="constraint-name flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
-
-                            <input type="text" placeholder="2x + y"
-                                class="constraint-expression flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
-
-                            <select
-                                class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
-                                <option value="<=">≤</option>
-                                <option value=">=">≥</option>
-                                <option value="=">=</option>
-                            </select>
-
-                            <input type="text" placeholder="10"
-                                class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
-
-                            <button type="button"
-                                class="add-constraint bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition">
-                                <i class="ph-bold ph-plus"></i>
-                            </button>
+                    <div class="flex flex-row space-x-4">
+                        <!-- Nom fonction objectif -->
+                        <div class="flex-1">
+                            <label for="objective-name" class="block text-gray-700 text-sm font-semibold mb-1">Nom de la
+                                Fonction Objective:</label>
+                            <input type="text" id="objective-name" placeholder="Nom de la fonction"
+                                class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
                         </div>
 
+                        <!-- Fonction objectif -->
+                        <div class="flex-1">
+                            <label for="objective-function"
+                                class="block text-gray-700 text-sm font-semibold mb-1">Fonction
+                                Objective (e.g., 3x + 5y):</label>
+                            <input type="text" id="objective-function" placeholder="3x + 5y"
+                                class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block tex t-gray-700 text-sm font-semibold mb-2">Contraintes:</label>
+                        <div id="constraints-container">
+                            <div class="constraint-group flex items-center space-x-3 mb-3">
+                                <input type="text" placeholder="Nom de la contrainte"
+                                    class="constraint-name flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+
+                                <input type="text" placeholder="2x + y"
+                                    class="constraint-expression flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+
+                                <select
+                                    class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
+                                    <option value="<=">≤</option>
+                                    <option value=">=">≥</option>
+                                    <option value="=">=</option>
+                                </select>
+
+                                <input type="text" placeholder="10"
+                                    class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+
+                                <button type="button"
+                                    class="add-constraint bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition">
+                                    <i class="ph-bold ph-plus"></i>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="text-center pt-4">
+                        <button id="solve-button">
+                            <i class="ph-bold ph-rocket"></i> Résoudre le problème
+                        </button>
                     </div>
                 </div>
+            </div>
 
-                <div class="text-center pt-4">
-                    <button id="solve-button">
-                        <i class="ph-bold ph-rocket"></i> Résoudre le problème
-                    </button>
+            <!-- Résultat -->
+            <div id="output-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
+                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">2. Solution</div>
+                <div class="p-5">
+                    <div id="solution-text" class="text-lg font-medium"></div>
+                    <div class="text-center pt-4">
+                        <button id="save-button"
+                            class="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
+                            <i class="ph-bold ph-floppy-disk"></i> Sauvegarder le problème
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tableaux du Simplexe -->
+            <div id="tableaux-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
+                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">3. Tableaux du Simplexe</div>
+                <div class="p-5">
+                    <div id="tableauxResults"></div>
+                </div>
+            </div>
+
+            <!-- Graphique -->
+            <div id="graph-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
+                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">4. Représentation Graphique
+                </div>
+                <div class="p-5">
+                    <div id="plot"></div>
+                </div>
+            </div>
+
+            <!-- Analyse de Sensibilité -->
+            <div id="sensitivity-section" class="hidden border border-gray-200 rounded-xl overflow-hidden">
+                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">5. Analyse de Sensibilité
+                </div>
+                <div class="p-5">
+                    <div id="sensitivity-text" class="text-md text-gray-700"></div>
                 </div>
             </div>
         </div>
-
-        <!-- Résultat -->
-        <div id="output-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
-            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">2. Solution</div>
-            <div class="p-5">
-                <div id="solution-text" class="text-lg font-medium"></div>
-                <div class="text-center pt-4">
-                    <button id="save-button"
-                        class="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
-                        <i class="ph-bold ph-floppy-disk"></i> Sauvegarder le problème
-                    </button>
+        <div class="md:w-1/3 mt-8 md:mt-0">
+            <div id="saved-problems-section"
+                class="mb-8 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-lg">
+                <div
+                    class="bg-indigo-50 dark:bg-gray-700 py-3 px-5 font-semibold text-indigo-800 dark:text-gray-200 text-lg">
+                    6. Problèmes Sauvegardés</div>
+                <div class="p-5 dark:bg-gray-800">
+                    <div id="saved-problems-list" class="space-y-2">
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Tableaux du Simplexe -->
-        <div id="tableaux-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
-            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">3. Tableaux du Simplexe</div>
-            <div class="p-5">
-                <div id="tableauxResults"></div>
-            </div>
-        </div>
-
-        <!-- Graphique -->
-        <div id="graph-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
-            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">4. Représentation Graphique</div>
-            <div class="p-5">
-                <div id="plot"></div>
-            </div>
-        </div>
-
-        <!-- Analyse de Sensibilité -->
-        <div id="sensitivity-section" class="hidden border border-gray-200 rounded-xl overflow-hidden">
-            <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">5. Analyse de Sensibilité</div>
-            <div class="p-5">
-                <div id="sensitivity-text" class="text-md text-gray-700"></div>
-            </div>
-        </div>
     </div>
-
-    <!-- Liste des problèmes sauvegardés -->
-    <div id="saved-problems-section" class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
-        <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">6. Problèmes Sauvegardés</div>
-        <div class="p-5">
-            <div id="saved-problems-list" class="space-y-2"></div>
-        </div>
-    </div>
-
     <!-- Scripts -->
     <script src="./simplexe2phases.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
