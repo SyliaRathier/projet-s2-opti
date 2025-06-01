@@ -536,7 +536,11 @@ function displaySensitivityAnalysis(result, constraints) {
             <td>${rhsValue.toFixed(4)}</td>
             <td>
                 <input type="number" step="any" name="rhs_${idx}" value="${constraint.value}" style="width:80px" />
-                <button type="button" class="test-sensitivity-btn" data-idx="${idx}">Tester</button>
+<button type="button"
+        class="test-sensitivity-btn bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-semibold px-4 py-1 rounded-full shadow-md hover:shadow-lg transition-all duration-300"
+        data-idx="${idx}">
+    <i class="ph-bold ph-flask mr-1"></i> Tester
+</button>
             </td>
         </tr>`;
     });
