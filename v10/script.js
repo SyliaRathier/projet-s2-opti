@@ -573,12 +573,12 @@ function displaySensitivityAnalysis(result, constraints) {
     // Empêcher le submit du formulaire (sécurité supplémentaire)
     const form = document.getElementById('sensitivity-form');
     if (form) {
-        form.addEventListener('submit', function(e) { e.preventDefault(); });
+        form.addEventListener('submit', function (e) { e.preventDefault(); });
     }
 
     // Correction : Utiliser addEventListener au lieu de .onclick pour éviter les conflits
     document.querySelectorAll('.test-sensitivity-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', function (e) {
             e.preventDefault();
             const idx = parseInt(this.getAttribute('data-idx'));
             const form = document.getElementById('sensitivity-form');
@@ -672,7 +672,7 @@ function displaySavedProblems() {
             <p class="text-gray-600">${problem.optimizationType === 'max' ? 'Maximisation' : 'Minimisation'}</p>
             <div class="flex space-x-2 mt-2">
                 <button class="load-problem bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
-                    <i class="ph-bold ph-arrow-clockwise mr-1"></i>
+                    <i class="ph-bold ph-arrow-clockwise mr-1" data-index="${index}"></i>
                 </button>
                 <button class="delete-problem bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
                     <i class="ph-bold ph-trash mr-1"></i>
