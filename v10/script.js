@@ -520,23 +520,49 @@ function displaySensitivityAnalysis(result, constraints) {
 
     constraints.forEach((constraint, idx) => {
         const constraintName = constraint.name || `c${idx + 1}`;
-        const slackIdx = headers.indexOf(constraintName);
+        // Correction : Chercher la variable de base associée à la contrainte (slack/surplus variable)
+        // On cherche dans la base (basis) la variable d'écart associée à la contrainte
+        // Si la base contient s1, s2, ... alors il faut que constraintName corresponde à s1, s2, etc.
+        // Sinon, on affiche 0.
         let shadowPrice = 0;
+        let rhsValue = 0;
+
+        // On cherche la variable d'écart associée à la contrainte dans la base
+        // On suppose que la variable d'écart s'appelle "s" + (idx+1) ou "e" + (idx+1) ou le nom de la contrainte
+        // On essaie plusieurs conventions
+        let slackNames = [
+            constraintName,
+            "s" + (idx + 1),
+            "e" + (idx + 1),
+            "a" + (idx + 1)
+        ];
+        let slackIdx = -1;
+        let basisIdx = -1;
+        for (let sn of slackNames) {
+            slackIdx = headers.indexOf(sn);
+            basisIdx = basis.indexOf(sn);
+            if (slackIdx !== -1) break;
+        }
+
         if (slackIdx !== -1) {
+            // Prix dual = - (coefficient dans la ligne objectif du tableau final)
             shadowPrice = -objRow[slackIdx];
         }
-        let rhsValue = 0;
-        const basisIdx = basis.indexOf(constraintName);
         if (basisIdx !== -1) {
             rhsValue = rows[basisIdx][rows[basisIdx].length - 1];
         }
+
         sensitivityHtml += `<tr>
             <td>${constraintName}</td>
             <td>${shadowPrice.toFixed(4)}</td>
             <td>${rhsValue.toFixed(4)}</td>
             <td>
                 <input type="number" step="any" name="rhs_${idx}" value="${constraint.value}" style="width:80px" />
-                <button type="button" class="test-sensitivity-btn" data-idx="${idx}">Tester</button>
+<button type="button"
+        class="test-sensitivity-btn bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-semibold px-4 py-1 rounded-full shadow-md hover:shadow-lg transition-all duration-300"
+        data-idx="${idx}">
+    <i class="ph-bold ph-flask mr-1"></i> Tester
+</button>
             </td>
         </tr>`;
     });
@@ -547,12 +573,12 @@ function displaySensitivityAnalysis(result, constraints) {
     // Empêcher le submit du formulaire (sécurité supplémentaire)
     const form = document.getElementById('sensitivity-form');
     if (form) {
-        form.addEventListener('submit', function(e) { e.preventDefault(); });
+        form.addEventListener('submit', function (e) { e.preventDefault(); });
     }
 
     // Correction : Utiliser addEventListener au lieu de .onclick pour éviter les conflits
     document.querySelectorAll('.test-sensitivity-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', function (e) {
             e.preventDefault();
             const idx = parseInt(this.getAttribute('data-idx'));
             const form = document.getElementById('sensitivity-form');
@@ -577,6 +603,8 @@ function displaySensitivityAnalysis(result, constraints) {
             displaySensitivityAnalysis(newResult, newConstraints);
         });
     });
+
+    displayConstraintRemovalTest(result, constraints);
 }
 
 
@@ -644,7 +672,7 @@ function displaySavedProblems() {
             <p class="text-gray-600">${problem.optimizationType === 'max' ? 'Maximisation' : 'Minimisation'}</p>
             <div class="flex space-x-2 mt-2">
                 <button class="load-problem bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
-                    <i class="ph-bold ph-arrow-clockwise mr-1"></i>
+                    <i class="ph-bold ph-arrow-clockwise mr-1" data-index="${index}"></i>
                 </button>
                 <button class="delete-problem bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
                     <i class="ph-bold ph-trash mr-1"></i>
@@ -712,6 +740,77 @@ function loadProblem(index) {
 document.addEventListener('DOMContentLoaded', () => {
     displaySavedProblems();
 });
+
+
+// Ajoute cette fonction à la fin du fichier (avant le dernier commentaire ou export éventuel)
+function displayConstraintRemovalTest(result, constraints) {
+    // Crée une section pour tester la suppression de contraintes
+    let html = `<div class="mt-8">
+        <h4 class="font-semibold text-indigo-700 mb-2">Test de suppression de contrainte</h4>
+        <div class="mb-2">Sélectionnez une contrainte à supprimer et observez l'effet sur la solution optimale et le graphe :</div>
+        <form id="remove-constraint-form" class="flex flex-wrap gap-2 mb-2">`;
+
+    constraints.forEach((constraint, idx) => {
+        const constraintName = constraint.name || `c${idx + 1}`;
+        html += `<label class="inline-flex items-center space-x-2">
+            <input type="radio" name="remove_constraint" value="${idx}" />
+            <span>${constraintName}</span>
+        </label>`;
+    });
+
+    html += `<button type="button" id="test-remove-constraint-btn" class="ml-4 bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition">Tester la suppression</button>
+        </form>
+        <div id="remove-constraint-result" class="mt-2"></div>
+    </div>`;
+
+    // Ajoute ce bloc sous la table de sensibilité
+    const sensitivityTextDiv = document.getElementById('sensitivity-text');
+    if (sensitivityTextDiv) {
+        // Supprime l'ancien test s'il existe
+        const oldTest = document.getElementById('remove-constraint-form');
+        if (oldTest && oldTest.parentNode) oldTest.parentNode.parentNode.removeChild(oldTest.parentNode);
+        sensitivityTextDiv.insertAdjacentHTML('beforeend', html);
+
+        // Ajoute le gestionnaire d'événement
+        document.getElementById('test-remove-constraint-btn').onclick = function () {
+            const form = document.getElementById('remove-constraint-form');
+            const idx = Array.from(form.elements['remove_constraint']).find(r => r.checked);
+            const resultDiv = document.getElementById('remove-constraint-result');
+            if (!idx) {
+                resultDiv.innerHTML = "<span class='text-red-600'>Veuillez sélectionner une contrainte à supprimer.</span>";
+                return;
+            }
+            const removeIdx = parseInt(idx.value);
+            const newConstraints = constraints.filter((_, i) => i !== removeIdx);
+            const objectiveFunction = objectiveFunctionInput.value;
+            const optimizationType = document.getElementById('optimization-type').value;
+            const problem = parseProblem(objectiveFunction, newConstraints, optimizationType);
+            let newResult;
+            try {
+                const solver = new LinearProgrammingSolver(problem);
+                newResult = solver.solve();
+            } catch (e) {
+                resultDiv.innerHTML = `<span class='text-red-600'>Problème non réalisable ou erreur de résolution après suppression de la contrainte.</span>`;
+                // Efface le graphe pour montrer qu'il n'y a pas de solution
+                plotSolution(problem, { variables: {}, p: 0, tableaux: [] });
+                return;
+            }
+            // Affiche la nouvelle solution optimale
+            let htmlSol = `<div class="mt-2 p-2 border rounded bg-blue-50">
+                <b>Nouvelle solution optimale sans la contrainte "${constraints[removeIdx].name || `c${removeIdx + 1}`}":</b><br>`;
+            htmlSol += "<ul>";
+            for (const [variable, value] of Object.entries(newResult.variables)) {
+                htmlSol += `<li>${variable} = ${value}</li>`;
+            }
+            htmlSol += `</ul>
+                <b>Valeur de la fonction objective : ${newResult.p.toFixed(2)}</b>
+            </div>`;
+            resultDiv.innerHTML = htmlSol;
+            // Met à jour le graphe avec la nouvelle solution et contraintes
+            plotSolution(problem, newResult);
+        };
+    }
+}
 
 
 
