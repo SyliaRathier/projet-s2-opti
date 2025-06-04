@@ -12,8 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
-    <style>
+    <link rel="stylesheet" href="style.css">
+    <!-- <style>
         :root {
             --background-color: #f8f9fa;
             --text-color: #2d3748;
@@ -277,43 +277,52 @@
         .dark-mode .bg-indigo-50 * {
             color: var(--text-color) !important;
         }
-    </style>
+    </style> -->
 </head>
 
-<body class="min-h-screen flex justify-center items-start py-10 px-4 transition-colors duration-300">
+<body
+    class="bg-gray-100 text-gray-900 font-inter min-h-screen flex justify-center items-start py-10 px-4 transition-colors duration-300">
+
+
+    <!-- Bouton mode nuit -->
+    <button id="mode-toggle"
+        class="fixed top-4 right-4 z-50 bg-indigo-600 hover:bg-indigo-800 text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition"
+        title="Basculer mode nuit/jour">
+        <span id="mode-icon" style="font-size:1.5rem;">🌙</span>
+    </button>
 
     <!-- Bouton d'aide Simplexe en haut à gauche -->
     <a href="simplexe-explication.html"
-       class="fixed top-4 left-4 z-399 50 flex items-center bg-blue-300 hover:bg-blue-400 text-blue-900 font-bold px-4 py-2 rounded-full shadow-lg transition"
-       title="Explication détaillée de la méthode du Simplexe">
+        class="fixed top-4 left-4 z-399 50 flex items-center bg-blue-300 hover:bg-blue-400 text-blue-900 font-bold px-4 py-2 rounded-full shadow-lg transition"
+        title="Explication détaillée de la méthode du Simplexe">
         <span style="font-size:1.5rem; margin-right:0.5rem;">📖</span>
         Méthode Simplexe
     </a>
 
-    <button class="mode-toggle" onclick="toggleMode()">
-        <i class="ph-bold ph-moon"></i>
-    </button>
+
 
     <div class="container flex flex-col md:flex-row md:space-x-8 max-w-7xl">
         <div class="md:w-2/3">
 
-            <h1 class="text-3xl font-bold text-center text-blue-800 mb-4">Méthode du simplexe</h1>
-            <p class="text-gray-700 text-center mb-6">
+            <h1 class="text-4xl font-bold text-center text-indigo-700 mb-10">Méthode du simplexe</h1>
+            <p class="text-gray-500 text-center mb-6">
                 Résolvez vos problèmes d'optimisation linéaire avec la méthode du Simplex.
             </p>
 
 
             <!-- Section 1 -->
-            <div id="input-section" class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
-                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">
+            <div id="input-section" class="bg-white rounded-lg shadow mb-8 overflow-hidden">
+                <h2 class="py-3 px-5 text-2xl font-bold text-indigo-600 mb-4">Entrez les données du problème</h2>
+
+                <!-- <div class=" py-3 px-5 font-semibold text-indigo-800 text-lg">
                     1. Entrez les données du problème
-                </div>
+                </div> -->
                 <div class="p-5 space-y-4">
                     <div>
-                        <label for="optimization-type" class="block text-gray-700 text-sm font-semibold mb-1">Type
+                        <label for="optimization-type" class="block tex t-gray-700 text-sm font-semibold mb-2">Type
                             d'optimisation:</label>
                         <select id="optimization-type"
-                            class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300">
+                            class="bg-white border border-gray-300 rounded-lg w-full py-2 px-3 t-gray-800 focus:ring-2 focus:ring-indigo-300">
                             <option value="max">Maximisation</option>
                             <option value="min">Minimisation</option>
                         </select>
@@ -322,19 +331,20 @@
                     <div class="flex flex-row space-x-4">
                         <!-- Nom fonction objectif -->
                         <div class="flex-1">
-                            <label for="objective-name" class="block text-gray-700 text-sm font-semibold mb-1">Nom de la
+                            <label for="objective-name" class="block tex t-gray-700 text-sm font-semibold mb-2">Nom de
+                                la
                                 Fonction Objective:</label>
                             <input type="text" id="objective-name" placeholder="Nom de la fonction"
-                                class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
+                                class="bg-white border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
                         </div>
 
                         <!-- Fonction objectif -->
                         <div class="flex-1">
                             <label for="objective-function"
-                                class="block text-gray-700 text-sm font-semibold mb-1">Fonction
+                                class="block tex t-gray-700 text-sm font-semibold mb-2">Fonction
                                 Objective (e.g., 3x + 5y):</label>
                             <input type="text" id="objective-function" placeholder="3x + 5y"
-                                class="border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
+                                class="bg-white border border-gray-300 rounded-lg w-full py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
                         </div>
                     </div>
 
@@ -343,20 +353,20 @@
                         <div id="constraints-container">
                             <div class="constraint-group flex items-center space-x-3 mb-3">
                                 <input type="text" placeholder="Nom de la contrainte"
-                                    class="constraint-name flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+                                    class="constraint-name flex-1 bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
 
                                 <input type="text" placeholder="2x + y"
-                                    class="constraint-expression flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+                                    class="constraint-expression flex-1 bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
 
                                 <select
-                                    class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
+                                    class="constraint-operator bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
                                     <option value="<=">≤</option>
                                     <option value=">=">≥</option>
                                     <option value="=">=</option>
                                 </select>
 
                                 <input type="text" placeholder="10"
-                                    class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800 " />
+                                    class="constraint-value w-20 bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 " />
 
                                 <button
                                     class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition shadow-[0_4px_6px_rgba(241,99,99,0.5)]"
@@ -375,7 +385,8 @@
                     </div>
 
                     <div class="text-center pt-4">
-                        <button id="solve-button">
+                        <button id="solve-button"
+                            class="bg-indigo-600 text-white hover:bg-indigo-800 transition rounded-lg px-3 py-2">
                             <i class="ph-bold ph-rocket"></i> Résoudre le problème
                         </button>
                     </div>
@@ -383,13 +394,16 @@
             </div>
 
             <!-- Résultat -->
-            <div id="output-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
-                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">2. Solution</div>
+            <!-- bg-white rounded-lg shadow mb-8 overflow-hidden -->
+            <div id="output-section" class="hidden bg-white mb-8 shadow rounded-lg overflow-hidden">
+                <!-- <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">2. Solution</div> -->
+                <h2 class="py-3 px-5 text-2xl font-bold text-indigo-600 mb-4">Solution</h2>
+
                 <div class="p-5">
                     <div id="solution-text" class="text-lg font-medium"></div>
                     <div class="text-center pt-4">
                         <button id="save-button"
-                            class="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
+                            class="bg-indigo-600 text-white hover:bg-indigo-800 transition rounded-lg px-3 py-2">
                             <i class="ph-bold ph-floppy-disk"></i> Sauvegarder le problème
                         </button>
                     </div>
@@ -397,38 +411,54 @@
             </div>
 
             <!-- Tableaux du Simplexe -->
-            <div id="tableaux-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
-                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">3. Tableaux du Simplexe</div>
+            <div id="tableaux-section" class="hidden bg-white mb-8 shadow rounded-lg overflow-hidden">
+                <!-- <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">3. Tableaux du Simplexe</div> -->
+                <h2 class="py-3 px-5 text-2xl font-bold text-indigo-600 mb-4">Tableaux du Simplexe</h2>
+
                 <div class="p-5">
                     <div id="tableauxResults"></div>
                 </div>
             </div>
 
             <!-- Graphique -->
-            <div id="graph-section" class="hidden mb-8 border border-gray-200 rounded-xl overflow-hidden">
-                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">4. Représentation Graphique
-                </div>
+            <div id="graph-section" class="hidden bg-white mb-8 shadow rounded-lg overflow-hidden">
+                <!-- <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">4. Représentation Graphique
+
+
+                </div> -->
+                <h2 class="py-3 px-5 text-2xl font-bold text-indigo-600 mb-4">Représentation Graphique</h2>
+
                 <div class="p-5">
                     <div id="plot"></div>
                 </div>
             </div>
 
             <!-- Analyse de Sensibilité -->
-            <div id="sensitivity-section" class="hidden border border-gray-200 rounded-xl overflow-hidden">
-                <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">5. Analyse de Sensibilité
-                </div>
+            <div id="sensitivity-section" class="hidden bg-white mb-8 shadow rounded-lg overflow-hidden">
+                <!-- <div class="bg-indigo-50 py-3 px-5 font-semibold text-indigo-800 text-lg">5. Analyse de Sensibilité
+                </div> -->
+
+                <h2 class="py-3 px-5 text-2xl font-bold text-indigo-600 mb-4">Analyse de Sensibilité</h2>
+
+
                 <div class="p-5">
-                    <div id="sensitivity-text" class="text-md text-gray-700"></div>
+                    <div id="sensitivity-text" class="text-md t-gray-700"></div>
                 </div>
             </div>
         </div>
+
+
+        <!-- Problèmes Sauvegardés -->
+
+
         <div class="md:w-1/3 mt-8 md:mt-0">
-            <div id="saved-problems-section"
-                class="mb-8 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-lg">
-                <div
+            <div id="saved-problems-section" class="bg-white mb-8 rounded-lg overflow-hidden shadow">
+                <!-- <div
                     class="bg-indigo-50 dark:bg-gray-700 py-3 px-5 font-semibold text-indigo-800 dark:text-gray-200 text-lg">
-                    6. Problèmes Sauvegardés</div>
-                <div class="p-5 dark:bg-gray-800">
+                    6. Problèmes Sauvegardés</div> -->
+                <h2 class="py-3 px-5 text-2xl font-bold text-indigo-600 mb-4">Problèmes Sauvegardés</h2>
+
+                <div class="p-5">
                     <div id="saved-problems-list" class="space-y-2">
                     </div>
                 </div>
@@ -441,19 +471,26 @@
     <script src="./script.js"></script>
 
     <script>
-        function toggleMode() {
-            const body = document.body;
-            const modeToggle = document.querySelector('.mode-toggle');
-            const moonIcon = modeToggle.querySelector('i');
-
-            body.classList.toggle('dark-mode');
-
-            const isDark = body.classList.contains('dark-mode');
-            if (isDark) {
-                moonIcon.classList.replace('ph-moon', 'ph-sun');
+        // Mode nuit/jour
+        const modeToggle = document.getElementById('mode-toggle');
+        const modeIcon = document.getElementById('mode-icon');
+        function setDarkMode(on) {
+            if (on) {
+                document.body.classList.add('dark-mode');
+                modeIcon.textContent = '☀️';
+                localStorage.setItem('simplexe-dark', '1');
             } else {
-                moonIcon.classList.replace('ph-sun', 'ph-moon');
+                document.body.classList.remove('dark-mode');
+                modeIcon.textContent = '🌙';
+                localStorage.setItem('simplexe-dark', '0');
             }
+        }
+        modeToggle.onclick = function () {
+            setDarkMode(!document.body.classList.contains('dark-mode'));
+        };
+        // Initial state from localStorage
+        if (localStorage.getItem('simplexe-dark') === '1') {
+            setDarkMode(true);
         }
     </script>
 </body>

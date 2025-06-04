@@ -67,43 +67,49 @@ solveButton.addEventListener('click', () => {
 
 
 function addConstraintGroup() {
+    const constraintsContainer = document.getElementById('constraints-container');
+
     const constraintGroup = document.createElement('div');
     constraintGroup.className = 'constraint-group flex items-center space-x-3 mb-3';
     constraintGroup.innerHTML = `
         <input type="text" placeholder="Nom de la contrainte"
-            class="constraint-name flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+            class="constraint-name flex-1 bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
         <input type="text" placeholder="2x + y"
-            class="constraint-expression flex-1 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
-        <select class="constraint-operator border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
+            class="constraint-expression flex-1 bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+        <select
+            class="constraint-operator bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 w-16">
             <option value="<=">≤</option>
             <option value=">=">≥</option>
             <option value="=">=</option>
         </select>
         <input type="text" placeholder="10"
-            class="constraint-value w-20 border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
-        <button class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition" type="button">
+            class="constraint-value w-20 bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+        <button
+            class="remove-constraint bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-2 transition shadow-[0_4px_6px_rgba(241,99,99,0.5)]"
+            type="button">
             <i class="ph-bold ph-trash"></i>
         </button>
     `;
 
-    // Déplacer le bouton "Ajouter une contrainte" après la nouvelle contrainte
-    // On suppose que le bouton a la classe "add-constraint"
-    const addBtn = constraintsContainer.querySelector('.add-constraint');
-    if (addBtn) {
-        constraintsContainer.insertBefore(constraintGroup, addBtn);
-    } else {
-        constraintsContainer.appendChild(constraintGroup);
-    }
+    // Ajoutez le groupe de contraintes au conteneur
+    constraintsContainer.insertBefore(constraintGroup, constraintsContainer.querySelector('.add-constraint'));
 
+    // Ajoutez l'événement pour le bouton de suppression
     const removeButton = constraintGroup.querySelector('.remove-constraint');
     removeButton.addEventListener('click', () => {
         constraintGroup.remove();
-        // Remettre le bouton "Ajouter une contrainte" à la fin si plus de contraintes
-        const addBtn = constraintsContainer.querySelector('.add-constraint');
-        if (addBtn) {
-            constraintsContainer.appendChild(addBtn);
-        }
     });
+}
+
+function createAddConstraintButton() {
+    const addButton = document.createElement('button');
+    addButton.type = 'button';
+    addButton.className = 'add-constraint bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-2 transition shadow-[0_4px_6px_rgba(99,102,241,0.5)]';
+    addButton.innerHTML = `
+        <i class="ph-bold ph-plus"></i>
+        Ajouter une contrainte
+    `;
+    return addButton;
 }
 
 
@@ -557,7 +563,7 @@ function displaySensitivityAnalysis(result, constraints) {
             <td>${shadowPrice.toFixed(4)}</td>
             <td>${rhsValue.toFixed(4)}</td>
             <td>
-                <input type="number" step="any" name="rhs_${idx}" value="${constraint.value}" style="width:80px" />
+                <input type="number" step="any" name="rhs_${idx}" value="${constraint.value}"  class="bg-white border border-gray-300 rounded-lg w-20 py-2 px-3 text-gray-800 focus:ring-2 focus:ring-indigo-300" />
 <button type="button"
         class="test-sensitivity-btn bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white font-semibold px-4 py-1 rounded-full shadow-md hover:shadow-lg transition-all duration-300"
         data-idx="${idx}">
@@ -665,11 +671,11 @@ function displaySavedProblems() {
     const savedProblems = JSON.parse(localStorage.getItem('savedProblems')) || [];
     savedProblems.forEach((problem, index) => {
         const problemDiv = document.createElement('div');
-        problemDiv.className = 'border border-gray-300 rounded-lg p-3 mb-2';
+        problemDiv.className = 'border border-gray-300 bg-white rounded-lg p-3 mb-2';
         problemDiv.innerHTML = `
             <h3 class="font-semibold text-indigo-700">${problem.objectiveName}</h3>
-            <p class="text-gray-700">${problem.objectiveFunction}</p>
-            <p class="text-gray-600">${problem.optimizationType === 'max' ? 'Maximisation' : 'Minimisation'}</p>
+            <p class="t-gray-700">${problem.objectiveFunction}</p>
+            <p class="t-gray-600">${problem.optimizationType === 'max' ? 'Maximisation' : 'Minimisation'}</p>
             <div class="flex space-x-2 mt-2">
                 <button class="load-problem bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
                     <i class="ph-bold ph-arrow-clockwise mr-1" data-index="${index}"></i>
@@ -730,6 +736,8 @@ function loadProblem(index) {
         lastGroup.querySelector('.constraint-operator').value = constraint.operator;
         lastGroup.querySelector('.constraint-value').value = constraint.value;
     });
+
+    constraintsContainer.appendChild(createAddConstraintButton());
 
     // Afficher la solution
     displaySolution(problem.solution, parseProblem(problem.objectiveFunction, problem.constraints, problem.optimizationType));
