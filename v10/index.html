@@ -13,133 +13,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="style.css">
-    <!-- <style>
+    <style>
         :root {
-            --background-color: #f8f9fa;
-            --text-color: #2d3748;
-            --input-background: #fff;
             --input-border: #e2e8f0;
-            --button-background: linear-gradient(to right, #6366f1, #3b82f6);
-            --button-hover: linear-gradient(to right, #4f46e5, #2563eb);
-            --button-active: linear-gradient(to right, #4338ca, #1d4ed8);
-            --result-background: #e6f0ff;
-            --result-border: #b3d9ff;
             --table-header: #f0f4f8;
-            --table-even: rgba(241, 245, 249, 0.5);
             --pivot-row: #bee3f8;
-            /* bleu très clair */
             --pivot-col: #bee3f8;
-            /* bleu clair */
             --pivot-cell: #3182ce;
-            /* bleu vif */
             --pivot-cell-font: #fff;
-            /* texte blanc pour bonne visibilité */
         }
 
         .dark-mode {
-            --background-color: #1a202c;
-            --text-color: #f7fafc;
-            --input-background: #2d3748;
             --input-border: #4a5568;
-            --button-background: linear-gradient(to right, #667eea, #5a67d8);
-            --button-hover: linear-gradient(to right, #5a67d8, #4c51bf);
-            --button-active: linear-gradient(to right, #4c51bf, #3182ce);
-            --result-background: #283149;
-            --result-border: #3e4c66;
             --table-header: #2d3748;
-            --table-even: #1a202c;
             --pivot-row: #2c5282;
             --pivot-col: #2b6cb0;
             --pivot-cell: #3182ce;
             --pivot-row-font: #f7fafc;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--background-color);
-            color: var(--text-color);
-            transition: background 0.3s, color 0.3s;
-        }
-
-        .container {
-            background-color: #fff;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            padding: 2rem;
-            width: 100%;
-            max-width: 60rem;
-            color: var(--text-color);
-            background: var(--background-color);
-            transition: background 0.3s, color 0.3s;
-        }
-
-        input,
-        select {
-            background-color: var(--input-background);
-            border: 1px solid var(--input-border);
-            color: var(--text-color);
-            border-radius: 0.5rem;
-            padding: 0.5rem 0.75rem;
-            width: 100%;
-            transition: all 0.2s ease-in-out;
-        }
-
-        input:focus,
-        select:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-            outline: none;
-        }
-
-        input::placeholder,
-        textarea::placeholder {
-            color: #a0aec0;
-        }
-
-        .dark-mode input::placeholder,
-        .dark-mode textarea::placeholder {
-            color: #d1d5db;
-        }
-
-        button {
-            background: var(--button-background);
-            color: white;
-            border: none;
-            border-radius: 9999px;
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            font-weight: 600;
-            /*box-shadow: 0 4px 6px rgba(99, 102, 241, 0.5);*/
-            transition: background 0.3s, box-shadow 0.3s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-
-
-        button:active {
-            background: var(--button-active);
-            box-shadow: none;
-        }
-
-        button i {
-            margin-right: 0.5rem;
-        }
-
-        #output-section,
-        #tableaux-section,
-        #graph-section,
-        #sensitivity-section,
-        #saved-problems-section {
-            background-color: var(--result-background);
-            border: 1px solid var(--result-border);
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            overflow: hidden;
-            color: var(--text-color);
-        }
 
         table {
             width: 100%;
@@ -160,9 +52,6 @@
             font-weight: 600;
         }
 
-        /* table tr:nth-child(even) {
-            background-color: var(--table-even);
-        } */
 
         /* Classes pivotées */
         .pivot-row {
@@ -180,108 +69,11 @@
             color: var(--pivot-cell-font) !important;
             font-weight: bold;
         }
-
-        /* Toggle mode button */
-        .mode-toggle {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            background: #6366f1;
-            color: white;
-            border: none;
-            border-radius: 9999px;
-            width: 2.5rem;
-            height: 2.5rem;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgb(99 102 241 / 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-        }
-
-        .mode-toggle:hover {
-            background-color: #4f46e5;
-            transform: translateY(-2px) scale(1.1);
-        }
-
-        .mode-toggle:active {
-            background-color: #4338ca;
-            transform: translateY(0) scale(0.9);
-            box-shadow: 0 1px 3px rgb(67 56 202 / 0.6);
-        }
-
-        .mode-toggle i {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            width: 100%;
-            height: 100%;
-            margin: 0 !important;
-            /* retire les marges héritées */
-        }
-
-        .dark-mode .mode-toggle i {
-            transform: rotate(30deg);
-        }
-
-        /* Override for special button cases */
-        #solve-button,
-        #save-button {
-            background: var(--button-background);
-            color: white;
-            font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            box-shadow: 0 4px 6px rgb(79 70 229 / 0.7);
-            border: none;
-            cursor: pointer;
-            transition: background 0.3s, box-shadow 0.3s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #solve-button:hover,
-        #save-button:hover {
-            background: var(--button-hover);
-            box-shadow: 0 6px 12px rgb(67 56 202 / 0.8);
-        }
-
-        #solve-button:active,
-        #save-button:active {
-            background: var(--button-active);
-            box-shadow: none;
-        }
-
-        #solve-button i,
-        #save-button i {
-            margin-right: 0.5rem;
-        }
-
-        /* Text color overrides for dark mode */
-        .dark-mode label,
-        .dark-mode .text-gray-600,
-        .dark-mode .text-gray-700,
-        .dark-mode .text-gray-800,
-        .dark-mode .text-indigo-800 {
-            color: var(--text-color) !important;
-        }
-
-        .dark-mode .bg-indigo-50 {
-            background-color: var(--result-background) !important;
-            color: var(--text-color) !important;
-        }
-
-        .dark-mode .bg-indigo-50 * {
-            color: var(--text-color) !important;
-        }
-    </style> -->
+    </style>
 </head>
 
 <body
-    class="bg-gray-100 text-gray-900 font-inter min-h-screen flex justify-center items-start py-10 px-4 transition-colors duration-300">
+    class="bg-gray-100 text-gray-900 font-inter min-h-screen justify-center items-start py-10 px-4 transition-colors duration-300">
 
 
     <!-- Bouton mode nuit -->
@@ -292,23 +84,23 @@
     </button>
 
     <!-- Bouton d'aide Simplexe en haut à gauche -->
+
     <a href="simplexe-explication.html"
-        class="fixed top-4 left-4 z-399 50 flex items-center bg-blue-300 hover:bg-blue-400 text-blue-900 font-bold px-4 py-2 rounded-full shadow-lg transition"
+        class="fixed top-4 left-4 z-50 flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white px-3 py-2 hover:bg-indigo-800 transition"
         title="Explication détaillée de la méthode du Simplexe">
-        <span style="font-size:1.5rem; margin-right:0.5rem;">📖</span>
+        <!-- <span style="font-size:1.5rem; margin-right:0.5rem;">🧮</span> -->
         Méthode Simplexe
     </a>
 
+    <div class="w-full mb-4 p-4">
+        <h1 class="text-4xl font-bold text-center text-indigo-700 mb-2">Méthode du simplexe</h1>
+        <p class="text-gray-500 text-center mb-6">
+            Résolvez vos problèmes d'optimisation linéaire avec la méthode du Simplex.
+        </p>
+    </div>
 
-
-    <div class="container flex flex-col md:flex-row md:space-x-8 max-w-7xl">
-        <div class="md:w-2/3">
-
-            <h1 class="text-4xl font-bold text-center text-indigo-700 mb-10">Méthode du simplexe</h1>
-            <p class="text-gray-500 text-center mb-6">
-                Résolvez vos problèmes d'optimisation linéaire avec la méthode du Simplex.
-            </p>
-
+    <div class="container flex max-w-7xl mx-auto space-x-8">
+        <div class="w-2/3">
 
             <!-- Section 1 -->
             <div id="input-section" class="bg-white rounded-lg shadow mb-8 overflow-hidden">
@@ -451,7 +243,7 @@
         <!-- Problèmes Sauvegardés -->
 
 
-        <div class="md:w-1/3 mt-8 md:mt-0">
+        <div class="w-1/3 ">
             <div id="saved-problems-section" class="bg-white mb-8 rounded-lg overflow-hidden shadow">
                 <!-- <div
                     class="bg-indigo-50 dark:bg-gray-700 py-3 px-5 font-semibold text-indigo-800 dark:text-gray-200 text-lg">
@@ -492,6 +284,9 @@
         if (localStorage.getItem('simplexe-dark') === '1') {
             setDarkMode(true);
         }
+
+        //transition: background-color 0.3s ease, transform 0.3s ease;
+
     </script>
 </body>
 

@@ -174,20 +174,6 @@ function parseProblem(objectiveFunction, constraints, optimizationType) {
 }
 
 
-// function displaySolution(result, problem) {
-//     let solutionTextString = "<div class='solution-container'>";
-//     solutionTextString += "<h3 class='text-xl font-semibold text-indigo-700 mb-2'>Solution Optimale</h3>";
-//     solutionTextString += `<p class='mb-2'>La solution optimale de la fonction objective ${problem.optimize} est atteinte pour :</p>`;
-//     solutionTextString += "<ul class='list-disc list-inside mb-4'>";
-//     for (const [variable, value] of Object.entries(result.variables)) {
-//         solutionTextString += `<li>${variable} = ${value}</li>`;
-//     }
-//     solutionTextString += "</ul>";
-//     solutionTextString += `<p class='font-bold'>Valeur de la fonction objective ${problem.optimize} : ${result.p.toFixed(2)}</p>`;
-//     solutionTextString += "</div>";
-//     solutionText.innerHTML = solutionTextString;
-// }
-
 
 function displaySolution(result, problem) {
     let solutionTextString = "<div class='solution-container'>";
