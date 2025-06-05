@@ -46,7 +46,7 @@
             <div class="mt-4">
                 <b>Schéma du principe :</b><br>
                 <img src="./th1.jfif" alt="Schéma Simplexe" class="mx-auto rounded shadow mb-4"
-                    style="max-width:350px;" />
+                    style="max-width:350px;">
                 <p class="text-center text-gray-400 text-sm">Le simplexe se déplace de sommet en sommet sur le polytope
                     des solutions réalisables.</p>
             </div>
@@ -491,7 +491,8 @@
         <!-- </div> -->
         <!-- </section> -->
 
-        <section class="text-center mt-12">
+        <section class="text-center mt-12" aria-labelledby="footer-heading">
+            <h2 id="footer-heading" class="sr-only">Pied de page</h2>
             <a href="index.html"
                 class="inline-block rounded-lg bg-indigo-600 text-white px-3 py-2 hover:bg-indigo-800 transition">
                 Retour au Solveur
@@ -499,29 +500,7 @@
         </section>
     </div>
 
-    <script>
-        // Mode nuit/jour
-        const modeToggle = document.getElementById('mode-toggle');
-        const modeIcon = document.getElementById('mode-icon');
-        function setDarkMode(on) {
-            if (on) {
-                document.body.classList.add('dark-mode');
-                modeIcon.textContent = '☀️';
-                localStorage.setItem('simplexe-dark', '1');
-            } else {
-                document.body.classList.remove('dark-mode');
-                modeIcon.textContent = '🌙';
-                localStorage.setItem('simplexe-dark', '0');
-            }
-        }
-        modeToggle.onclick = function () {
-            setDarkMode(!document.body.classList.contains('dark-mode'));
-        };
-        // Initial state from localStorage
-        if (localStorage.getItem('simplexe-dark') === '1') {
-            setDarkMode(true);
-        }
-    </script>
+    <script src="./mode.js"></script>
 </body>
 
 </html>
