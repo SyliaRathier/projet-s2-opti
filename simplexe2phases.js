@@ -264,6 +264,7 @@ const problemeMinTest = {
 // PASSER EN PARAMETRE LE PROBLEME LinearProgrammingSolver(nom du probleme)
 const solver = new LinearProgrammingSolver(problemeMinTest);
 const result = solver.solve();
+console.log("Optimal value:", result.p);
 console.log(result.tableaux)
 
 // let resOptiVal = result.p < 0 ? (result.p * -1) : result.p

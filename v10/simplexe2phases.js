@@ -261,11 +261,49 @@ const problemeMinTest = {
     }
 };
 
+const problemeMinTest2 = {
+    optimize: 'objectif',
+    opType: 'min',
+    constraints: {
+        c1: { max: 40 },   // x + 2y <= 40
+        c2: { min: 30 },   // 3x + y >= 30
+        c3: { min: 60 }    // 4x + 3y >= 60
+    },
+    variables: {
+        x: { objectif: 20, c1: 1, c2: 3, c3: 4 },
+        y: { objectif: 10, c1: 2, c2: 1, c3: 3 }
+    }
+};
+
+
 // PASSER EN PARAMETRE LE PROBLEME LinearProgrammingSolver(nom du probleme)
-// console.log(problemeMax1)
-// const solver = new LinearProgrammingSolver(problemeMax1);
+// console.log(problemeMinTest)
+const solver = new LinearProgrammingSolver(problemeMinTest2);
+const result = solver.solve();
+console.log("Optimal value:", result.p);
+console.log(result.tableaux)
+
+// const problemeMinTest = {
+//     optimize: 'objectif',
+//     opType: 'min',
+//     constraints: {
+//         c1: { max: 40 },       // x + y + z + w <= 40
+//         c2: { min: 10 },       // 2x + y - z - w >= 10
+//         c3: { min: 12 }        // w - y >= 12
+//     },
+//     variables: {
+//         x: { objectif: 2, c1: 1, c2: 2, c3: 0 },
+//         y: { objectif: 3, c1: 1, c2: 1, c3: -1 },
+//         z: { objectif: 1, c1: 1, c2: -1, c3: 0 },
+//         w: { objectif: 1, c1: 1, c2: -1, c3: 1 }
+//     }
+// };
+
+// // PASSER EN PARAMETRE LE PROBLEME LinearProgrammingSolver(nom du probleme)
+// const solver = new LinearProgrammingSolver(problemeMinTest);
 // const result = solver.solve();
-// //console.log(result.tableaux)
+// console.log("Optimal value:", result.p);
+// console.log(result.tableaux)
 
 // let resOptiVal = result.p < 0 ? (result.p * -1) : result.p
 // console.log("Optimal solution: p =", resOptiVal);
