@@ -96,3 +96,18 @@
 .dark-mode a {
     color: #ffffff;
 }
+
+
+#saved-problems-section {
+    max-height: 450px;
+    /* Ajustez cette valeur selon vos besoins */
+    overflow-y: auto;
+    /* Active le défilement vertical si nécessaire */
+}
+
+#saved-problems-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* Espace entre les éléments */
+}
