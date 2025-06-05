@@ -120,58 +120,6 @@ constraintsContainer.addEventListener('click', (event) => {
     }
 });
 
-// function parseProblem(objectiveFunction, constraints, optimizationType) {
-//     const objectiveName = document.getElementById('objective-name').value || 'objectif';
-//     const problem = {
-//         optimize: objectiveName,
-//         opType: optimizationType,
-//         constraints: {},
-//         variables: {}
-//     };
-
-//     // Analyser la fonction objective
-//     const objectiveParts = objectiveFunction.split(/([+-]?\d*[a-zA-Z]+)/).filter(Boolean);
-//     objectiveParts.forEach(part => {
-//         const match = part.match(/([+-]?\d*)([a-zA-Z]+)/);
-//         if (match) {
-//             const coeff = match[1] === '-' ? -1 : match[1] === '+' ? 1 : parseFloat(match[1] || 1);
-//             const varName = match[2];
-//             problem.variables[varName] = { [objectiveName]: coeff };
-//         }
-//     });
-
-//     // Analyser les contraintes
-//     constraints.forEach((constraint, index) => {
-//         const constraintName = constraint.name || `c${index + 1}`;
-//         const parts = constraint.expression.split(/([+-]?\d*[a-zA-Z]+)/).filter(Boolean);
-//         const constraintObj = {};
-
-//         parts.forEach(part => {
-//             const match = part.match(/([+-]?\d*)([a-zA-Z]+)/);
-//             if (match) {
-//                 const coeff = match[1] === '-' ? -1 : match[1] === '+' ? 1 : parseFloat(match[1] || 1);
-//                 const varName = match[2];
-//                 if (problem.variables[varName]) {
-//                     problem.variables[varName][constraintName] = coeff;
-//                 } else {
-//                     problem.variables[varName] = { [constraintName]: coeff };
-//                 }
-//             }
-//         });
-
-//         if (constraint.operator === '<=') {
-//             constraintObj.max = parseFloat(constraint.value);
-//         } else if (constraint.operator === '>=') {
-//             constraintObj.min = parseFloat(constraint.value);
-//         } else if (constraint.operator === '=') {
-//             constraintObj.equal = parseFloat(constraint.value);
-//         }
-
-//         problem.constraints[constraintName] = constraintObj;
-//     });
-
-//     return problem;
-// }
 
 function parseProblem(objectiveFunction, constraints, optimizationType) {
     const objectiveName = document.getElementById('objective-name').value || 'objectif';
@@ -187,7 +135,15 @@ function parseProblem(objectiveFunction, constraints, optimizationType) {
     objectiveParts.forEach(part => {
         const match = part.match(/([+-]?\s*\d*)\s*([a-zA-Z]+)/);
         if (match) {
-            const coeff = match[1].trim() === '-' ? -1 : match[1].trim() === '+' ? 1 : parseFloat(match[1].trim() || 1);
+            let coeffStr = (match[1] || '').trim();
+            let coeff;
+            if (coeffStr === '-') {
+                coeff = -1;
+            } else if (coeffStr === '+') {
+                coeff = 1;
+            } else {
+                coeff = parseFloat(coeffStr || 1);
+            }
             const varName = match[2].trim();
             if (!problem.variables[varName]) {
                 problem.variables[varName] = {};
