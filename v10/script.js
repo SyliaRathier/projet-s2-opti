@@ -307,17 +307,21 @@ function displayTableaux(tableaux) {
 
 function plotSolution(problem, result) {
     const plotDiv = document.getElementById('plot');
+    const graphSection = document.getElementById('graph-section');
     const variables = Object.keys(problem.variables);
 
     if (variables.length === 2) {
         plot2D(problem, result, plotDiv);
+        graphSection.classList.remove('hidden');
     } else if (variables.length === 3) {
         plot3D(problem, result, plotDiv);
+        graphSection.classList.remove('hidden');
     } else {
-        plotDiv.innerHTML = '<p>Graph visualization is available for problems with 2 or 3 variables.</p>';
-        Plotly.newPlot(plotDiv, [], {}); // Clear any previous plot
+        plotDiv.innerHTML = '<p>La visualisation graphique est disponible uniquement pour les problèmes avec 2 ou 3 variables.</p>';
+        graphSection.classList.add('hidden');
     }
 }
+
 
 function plot2D(problem, result, plotDiv) {
     const data = [];
