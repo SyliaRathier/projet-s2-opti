@@ -367,12 +367,14 @@ function plot2D(problem, result, plotDiv) {
     // Point optimal
     const optimalX = result.variables[xVar] || 0;
     const optimalY = result.variables[yVar] || 0;
+    let res = result.p.toFixed(2) >= 0 ? result.p.toFixed(2) : (result.p.toFixed(2) * -1)
+
     data.push({
         x: [optimalX],
         y: [optimalY],
         mode: 'markers',
         type: 'scatter',
-        name: `Optimal Solution (p = ${result.p})`,
+        name: `Optimal Solution (p = ${res})`,
         marker: { size: 12, color: 'red', symbol: 'star' }
     });
 
@@ -490,6 +492,7 @@ function plot3D(problem, result, plotDiv) {
     const optimalX = result.variables[xVar] || 0;
     const optimalY = result.variables[yVar] || 0;
     const optimalZ = result.variables[zVar] || 0;
+    let res = result.p.toFixed(2) >= 0 ? result.p.toFixed(2) : (result.p.toFixed(2) * -1)
 
     data.push({
         x: [optimalX],
@@ -497,7 +500,7 @@ function plot3D(problem, result, plotDiv) {
         z: [optimalZ],
         mode: 'markers',
         type: 'scatter3d',
-        name: `Optimal Solution (p=${result.p})`,
+        name: `Optimal Solution (${res})`,
         marker: { size: 8, color: 'red', symbol: 'circle' },
         showlegend: true
     });
