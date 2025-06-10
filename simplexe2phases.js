@@ -124,17 +124,48 @@ class LinearProgrammingSolver {
             objRow[i] = sign * (variables[v]?.[optimize] || 0);
         });
 
-        // Fix for basic vars
+        // Correction pour la constante (RHS)
         this.basis.forEach((bv, i) => {
             const coeff = variables[bv]?.[optimize] || 0;
-            this.tableau[i].forEach((val, j) => {
-                objRow[j] -= coeff * val;
-            });
+            for (let j = 0; j < this.vars.length; j++) {
+                objRow[j] -= sign * coeff * this.tableau[i][j];
+            }
         });
 
         this.tableau[this.tableau.length - 1] = objRow;
         this.tableaux.push(this._formatTableau());
     }
+
+    // _startPhase2() {
+    //     this.phase = 2;
+
+    //     // Remove artificial columns
+    //     const artiIndexes = this.artificials.map(a => this.vars.indexOf(a));
+    //     this.vars = this.vars.filter(v => !this.artificials.includes(v));
+    //     this.tableau = this.tableau.map(row => row.filter((_, i) => !artiIndexes.includes(i)));
+
+    //     // Recalculate objective row
+    //     const { optimize, opType, variables } = this.problem;
+    //     let objRow = Array(this.vars.length).fill(0);
+    //     const isMin = opType === 'min';
+    //     const sign = isMin ? 1 : -1;
+
+    //     this.vars.forEach((v, i) => {
+    //         if (v === 'RHS') return;
+    //         objRow[i] = sign * (variables[v]?.[optimize] || 0);
+    //     });
+
+    //     // Fix for basic vars
+    //     this.basis.forEach((bv, i) => {
+    //         const coeff = variables[bv]?.[optimize] || 0;
+    //         this.tableau[i].forEach((val, j) => {
+    //             objRow[j] -= coeff * val;
+    //         });
+    //     });
+
+    //     this.tableau[this.tableau.length - 1] = objRow;
+    //     this.tableaux.push(this._formatTableau());
+    // }
 
     _simplex() {
         let maxIter = 50;
@@ -275,20 +306,35 @@ const problemeMinTest2 = {
     }
 };
 
-// PASSER EN PARAMETRE LE PROBLEME LinearProgrammingSolver(nom du probleme) console.log(problemeMinTest)
-const solver = new LinearProgrammingSolver(problemeMinTest);
+
+const problem = {
+    optimize: 'p',
+    opType: 'min',
+    constraints: {
+        c1: { max: 9 },
+        c2: { min: 5 }
+    },
+    variables: {
+        x: { p: 4, c1: 1, c2: 0 },
+        y: { p: -3, c1: 1, c2: 1 }
+    }
+};
+
+
+//PASSER EN PARAMETRE LE PROBLEME LinearProgrammingSolver(nom du probleme) console.log(problemeMinTest)
+const solver = new LinearProgrammingSolver(problem);
 const result = solver.solve();
 console.log("Optimal value:", result.p);
 console.log(result.tableaux)
 
-let resOptiVal = result.p < 0 ? (result.p * -1) : result.p
-console.log("Optimal solution: p =", resOptiVal);
-console.log("Variable values:", result.variables);
-result.tableaux.forEach((tab, i) => {
-    console.log(`\nTableau ${i + 1}:`);
-    console.log(tab.headers.join("\t"));
-    tab.rows.forEach((row, r) => {
-        const label = r < tab.basis.length ? "*" + tab.basis[r] : "-p";
-        console.log(label + "\t" + row.map(n => Math.round(n * 1000) / 1000).join("\t"));
-    });
-});
+// let resOptiVal = result.p < 0 ? (result.p * -1) : result.p
+// console.log("Optimal solution: p =", resOptiVal);
+// console.log("Variable values:", result.variables);
+// result.tableaux.forEach((tab, i) => {
+//     console.log(`\nTableau ${i + 1}:`);
+//     console.log(tab.headers.join("\t"));
+//     tab.rows.forEach((row, r) => {
+//         const label = r < tab.basis.length ? "*" + tab.basis[r] : "-p";
+//         console.log(label + "\t" + row.map(n => Math.round(n * 1000) / 1000).join("\t"));
+//     });
+// });
