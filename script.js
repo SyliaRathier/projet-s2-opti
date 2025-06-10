@@ -41,10 +41,10 @@ solveButton.addEventListener('click', () => {
             throw new Error("Veuillez entrer au moins une contrainte.");
         }
 
-        console.log(problem)
+        console.log("probleme :", problem)
         const solver = new LinearProgrammingSolver(problem);
         const result = solver.solve();
-        console.log(result)
+        console.log("resultat : ", result)
 
         // Stocker le résultat dans la variable globale
         currentResult = result;
@@ -122,7 +122,7 @@ constraintsContainer.addEventListener('click', (event) => {
 
 
 function parseProblem(objectiveFunction, constraints, optimizationType) {
-    const objectiveName = document.getElementById('objective-name').value || 'objectif';
+    const objectiveName = document.getElementById('objective-name')?.value || 'F';
     const problem = {
         optimize: objectiveName,
         opType: optimizationType,
@@ -130,46 +130,56 @@ function parseProblem(objectiveFunction, constraints, optimizationType) {
         variables: {}
     };
 
-    // Analyser la fonction objectif
-    const objectiveParts = objectiveFunction.split(/([+-]\s*\d*[a-zA-Z]+)/).filter(Boolean);
-    objectiveParts.forEach(part => {
-        const match = part.match(/([+-]?\s*\d*)\s*([a-zA-Z]+)/);
-        if (match) {
-            let coeffStr = (match[1] || '').trim();
-            let coeff;
-            if (coeffStr === '-') {
-                coeff = -1;
-            } else if (coeffStr === '+') {
-                coeff = 1;
-            } else {
-                coeff = parseFloat(coeffStr || 1);
+    // Fonction utilitaire pour parser une expression linéaire avec décimaux et fractions
+    function parseLinearExpression(expr) {
+        expr = expr.trim();
+        if (!/^[+-]/.test(expr)) expr = '+' + expr;
+        // Expression régulière : capture "+3.5x", "-0.2y", "+(1/2)z", "-3/4t", "+x"
+        const regex = /([+-])\s*((?:\(\s*\d+\s*\/\s*\d+\s*\))|(?:\d+\s*\/\s*\d+)|(?:\d*\.\d+)|(?:\d+))?\s*([a-zA-Z]+)/g;
+        const result = {};
+        let match;
+        while ((match = regex.exec(expr)) !== null) {
+            let [, sign, coeffStr, varName] = match;
+            let coeff = 1;
+            if (coeffStr) {
+                coeffStr = coeffStr.replace(/\s+/g, ''); // retire espaces
+                // Si fraction entre parenthèses, exemple (1/2)
+                if (coeffStr.startsWith('(') && coeffStr.endsWith(')')) {
+                    coeffStr = coeffStr.slice(1, -1);
+                }
+                if (coeffStr.includes('/')) {
+                    // C’est une fraction
+                    const [num, den] = coeffStr.split('/').map(Number);
+                    coeff = num / den;
+                } else {
+                    // Nombre décimal ou entier
+                    coeff = parseFloat(coeffStr);
+                }
             }
-            const varName = match[2].trim();
-            if (!problem.variables[varName]) {
-                problem.variables[varName] = {};
-            }
-            problem.variables[varName][objectiveName] = coeff;
+            if (sign === '-') coeff *= -1;
+            result[varName] = coeff;
         }
+        return result;
+    }
+
+    // Parse fonction objectif
+    const objVars = parseLinearExpression(objectiveFunction);
+    Object.keys(objVars).forEach(varName => {
+        if (!problem.variables[varName]) problem.variables[varName] = {};
+        problem.variables[varName][objectiveName] = objVars[varName];
     });
 
-    // Analyser les contraintes
+    // Parse les contraintes
     constraints.forEach((constraint, index) => {
         const constraintName = constraint.name || `C${index + 1}`;
-        const parts = constraint.expression.split(/([+-]\s*\d*[a-zA-Z]+)/).filter(Boolean);
-        const constraintObj = {};
+        const consVars = parseLinearExpression(constraint.expression);
 
-        parts.forEach(part => {
-            const match = part.match(/([+-]?\s*\d*)\s*([a-zA-Z]+)/);
-            if (match) {
-                const coeff = match[1].trim() === '-' ? -1 : match[1].trim() === '+' ? 1 : parseFloat(match[1].trim() || 1);
-                const varName = match[2].trim();
-                if (!problem.variables[varName]) {
-                    problem.variables[varName] = {};
-                }
-                problem.variables[varName][constraintName] = coeff;
-            }
+        Object.keys(consVars).forEach(varName => {
+            if (!problem.variables[varName]) problem.variables[varName] = {};
+            problem.variables[varName][constraintName] = consVars[varName];
         });
 
+        const constraintObj = {};
         if (constraint.operator === '<=') {
             constraintObj.max = parseFloat(constraint.value);
         } else if (constraint.operator === '>=') {
@@ -177,12 +187,101 @@ function parseProblem(objectiveFunction, constraints, optimizationType) {
         } else if (constraint.operator === '=') {
             constraintObj.equal = parseFloat(constraint.value);
         }
-
         problem.constraints[constraintName] = constraintObj;
+    });
+
+    // Pour toutes les variables, compléter les coefficients manquants par 0
+    const allVarNames = Object.keys(problem.variables);
+    const allConstraintNames = Object.keys(problem.constraints);
+    allVarNames.forEach(varName => {
+        if (problem.variables[varName][objectiveName] === undefined)
+            problem.variables[varName][objectiveName] = 0;
+        allConstraintNames.forEach(constraintName => {
+            if (problem.variables[varName][constraintName] === undefined)
+                problem.variables[varName][constraintName] = 0;
+        });
     });
 
     return problem;
 }
+
+// function parseProblem(objectiveFunction, constraints, optimizationType) {
+//     const objectiveName = document.getElementById('objective-name')?.value || 'F';
+//     const problem = {
+//         optimize: objectiveName,
+//         opType: optimizationType,
+//         constraints: {},
+//         variables: {}
+//     };
+
+//     // Fonction utilitaire pour parser une expression linéaire
+//     function parseLinearExpression(expr) {
+//         // Ajoute un "+" devant le premier terme s'il n'y en a pas
+//         expr = expr.trim();
+//         if (!/^[+-]/.test(expr)) expr = '+' + expr;
+//         // Match tous les termes du type "+3x", "- y", "+z", etc.
+//         const regex = /([+-]\s*\d*\s*[a-zA-Z]+)/g;
+//         const terms = expr.match(regex) || [];
+//         const result = {};
+//         terms.forEach(term => {
+//             // [signe][coeff][var] e.g. "+3x", "- 2y", "+z"
+//             const match = term.match(/([+-])\s*(\d*)\s*([a-zA-Z]+)/);
+//             if (match) {
+//                 let [, sign, coeff, varName] = match;
+//                 let value = (coeff === '' ? 1 : parseFloat(coeff));
+//                 value *= (sign === '-' ? -1 : 1);
+//                 result[varName] = value;
+//             }
+//         });
+//         return result;
+//     }
+
+//     // Parse fonction objectif
+//     const objVars = parseLinearExpression(objectiveFunction);
+//     Object.keys(objVars).forEach(varName => {
+//         if (!problem.variables[varName]) problem.variables[varName] = {};
+//         problem.variables[varName][objectiveName] = objVars[varName];
+//     });
+
+//     // Parse les contraintes
+//     constraints.forEach((constraint, index) => {
+//         const constraintName = constraint.name || `C${index + 1}`;
+//         const consVars = parseLinearExpression(constraint.expression);
+
+//         Object.keys(consVars).forEach(varName => {
+//             if (!problem.variables[varName]) problem.variables[varName] = {};
+//             problem.variables[varName][constraintName] = consVars[varName];
+//         });
+
+//         const constraintObj = {};
+//         if (constraint.operator === '<=') {
+//             constraintObj.max = parseFloat(constraint.value);
+//         } else if (constraint.operator === '>=') {
+//             constraintObj.min = parseFloat(constraint.value);
+//         } else if (constraint.operator === '=') {
+//             constraintObj.equal = parseFloat(constraint.value);
+//         }
+//         problem.constraints[constraintName] = constraintObj;
+//     });
+
+//     // Pour toutes les variables, compléter les coefficients manquants par 0
+//     const allVarNames = Object.keys(problem.variables);
+//     const allConstraintNames = Object.keys(problem.constraints);
+//     allVarNames.forEach(varName => {
+//         // Pour l'objectif
+//         if (problem.variables[varName][objectiveName] === undefined)
+//             problem.variables[varName][objectiveName] = 0;
+//         // Pour chaque contrainte
+//         allConstraintNames.forEach(constraintName => {
+//             if (problem.variables[varName][constraintName] === undefined)
+//                 problem.variables[varName][constraintName] = 0;
+//         });
+//     });
+
+//     return problem;
+// }
+
+
 
 
 
@@ -557,7 +656,7 @@ function displaySensitivityAnalysis(result, constraints) {
 
         if (slackIdx !== -1) {
             // Prix dual = - (coefficient dans la ligne objectif du tableau final)
-            shadowPrice = -objRow[slackIdx];
+            shadowPrice = objRow[slackIdx];
         }
         if (basisIdx !== -1) {
             rhsValue = rows[basisIdx][rows[basisIdx].length - 1];
