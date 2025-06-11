@@ -784,8 +784,8 @@ function displaySavedProblems() {
                 <button class="load-problem bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
                     <i class="ph-bold ph-arrow-clockwise mr-1" data-index="${index}"></i>
                 </button>
-                <button class="delete-problem bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-1 transition" data-index="${index}">
-                    <i class="ph-bold ph-trash mr-1"></i>
+                <button class="delete-problem bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-1 transition">
+                    <i class="ph-bold ph-trash mr-1" data-index="${index}"></i>
                 </button>
             </div>
         `;
@@ -796,6 +796,7 @@ function displaySavedProblems() {
     document.querySelectorAll('.load-problem').forEach(button => {
         button.addEventListener('click', (event) => {
             const index = event.target.getAttribute('data-index');
+            //console.log("Loading problem at index: " + index);
             loadProblem(index);
         });
     });
@@ -803,6 +804,7 @@ function displaySavedProblems() {
     document.querySelectorAll('.delete-problem').forEach(button => {
         button.addEventListener('click', (event) => {
             const index = event.target.getAttribute('data-index');
+            //console.log("Deleting problem at index: " + index);
             deleteProblem(index);
         });
     });
