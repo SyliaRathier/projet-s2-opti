@@ -124,7 +124,6 @@ class LinearProgrammingSolver {
             objRow[i] = sign * (variables[v]?.[optimize] || 0);
         });
 
-        // Correction pour la constante (RHS)
         this.basis.forEach((bv, i) => {
             const coeff = variables[bv]?.[optimize] || 0;
             for (let j = 0; j < this.vars.length; j++) {
@@ -322,10 +321,10 @@ const problem = {
 
 
 //PASSER EN PARAMETRE LE PROBLEME LinearProgrammingSolver(nom du probleme) console.log(problemeMinTest)
-const solver = new LinearProgrammingSolver(problem);
-const result = solver.solve();
-console.log("Optimal value:", result.p);
-console.log(result.tableaux)
+// const solver = new LinearProgrammingSolver(problem);
+// const result = solver.solve();
+// console.log("Optimal value:", result.p);
+// console.log(result.tableaux)
 
 // let resOptiVal = result.p < 0 ? (result.p * -1) : result.p
 // console.log("Optimal solution: p =", resOptiVal);
